@@ -12,6 +12,7 @@ import torch
 import predictor
 from isolation_detector import IsolationDetector
 from autoencoder_detector import AutoencoderDetector, TransactionAutoencoder
+from config import ENSEMBLE_CONFIG
 
 
 @dataclass(frozen=True)
@@ -80,14 +81,41 @@ class AnomalyEngine:
 
     def _load_isolation_forest_artifacts(self) -> None:
         """
-        Load Isolation Forest model. Note: the existing `IsolationDetector.train()`
-        saves the model but not the scaler; we fit the scaler on-demand per request.
+        Load Isolation Forest model and scaler artifacts.
         """
         model_path = self._base_dir / "models" / "isolation_forest.pkl"
+        scaler_path = self._base_dir / "models" / "isolation_scaler.pkl"
         if not model_path.exists():
             raise FileNotFoundError(f"Missing Isolation Forest model: {model_path}")
+        if not scaler_path.exists():
+            raise FileNotFoundError(f"Missing Isolation Forest scaler: {scaler_path}")
 
         self.isolation_detector.model = joblib.load(model_path)
+        self.isolation_detector.scaler = joblib.load(scaler_path)
+
+    @staticmethod
+    def _normalize_residual(predicted: float, actual: float) -> float:
+        """
+        Convert raw currency residual into a stable, dimensionless score in [0, 1].
+
+        Uses relative error vs predicted amount and clips extreme values.
+        """
+        eps = 1e-6
+        rel = abs(actual - predicted) / (abs(predicted) + eps)
+        # Clip to avoid a single extreme transaction dominating the ensemble.
+        return float(min(max(rel, 0.0), 1.0))
+
+    @staticmethod
+    def _normalize_autoencoder_error(error: float) -> float:
+        """
+        Convert raw reconstruction error into a bounded anomaly score in [0, 1].
+
+        Uses a simple saturation transform: score = error / (error + 1).
+        """
+        if error <= 0:
+            return 0.0
+        score = error / (error + 1.0)
+        return float(min(max(score, 0.0), 1.0))
 
     def _load_autoencoder_artifacts(self) -> None:
         """
@@ -153,23 +181,27 @@ class AnomalyEngine:
 
             predicted = self._predict_expected_spending(seq)
             residual = self.compute_residual(predicted=predicted, actual=amount)
-
-            # Fit detector scaler if never fitted (its training method does not persist it).
-            if not hasattr(self.isolation_detector.scaler, "mean_"):
-                fit_values = np.array(seq + [amount], dtype=float).reshape(-1, 1)
-                self.isolation_detector.scaler.fit(fit_values)
+            residual_score = self._normalize_residual(predicted=predicted, actual=amount)
 
             if self.autoencoder_detector.model is None:
                 raise RuntimeError("Autoencoder model is not loaded")
             if self.isolation_detector.model is None:
                 raise RuntimeError("Isolation Forest model is not loaded")
 
-            iso_score = float(self.isolation_detector.detect(amount))
-            auto_score = float(self.autoencoder_detector.detect(amount))
+            # IsolationForest returns 1 (normal) or -1 (anomaly). Convert to anomaly score: 0 or 1.
+            iso_pred = int(self.isolation_detector.detect(amount))
+            iso_score = 1.0 if iso_pred == -1 else 0.0
 
-            final_score = (0.4 * auto_score) + (0.3 * iso_score) + (0.3 * residual)
+            auto_error = float(self.autoencoder_detector.detect(amount))
+            auto_score = self._normalize_autoencoder_error(auto_error)
 
-            return {
+            final_score = (
+                ENSEMBLE_CONFIG.w_auto * auto_score
+                + ENSEMBLE_CONFIG.w_iso * iso_score
+                + ENSEMBLE_CONFIG.w_residual * residual_score
+            )
+
+            result = {
                 "predicted_spending": float(predicted),
                 "actual_spending": float(amount),
                 "residual": float(residual),
@@ -177,6 +209,18 @@ class AnomalyEngine:
                 "isolation_score": float(iso_score),
                 "final_anomaly_score": float(final_score),
             }
+
+            # Attach a simple, human-readable risk label based on configured thresholds.
+            if final_score >= ENSEMBLE_CONFIG.high_threshold:
+                result["risk_level"] = "HIGH"
+            elif final_score >= ENSEMBLE_CONFIG.medium_threshold:
+                result["risk_level"] = "MEDIUM"
+            elif final_score >= ENSEMBLE_CONFIG.low_threshold:
+                result["risk_level"] = "LOW"
+            else:
+                result["risk_level"] = "NONE"
+
+            return result
         except Exception as exc:
             # Log full details for observability, raise stable error to API.
             self._logger.exception(

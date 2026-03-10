@@ -2,6 +2,7 @@ import torch
 import numpy as np
 import joblib
 import locale
+from pathlib import Path
 from lstm_model import SpendingLSTM
 
 def format_indian_rupees(amount):
@@ -18,10 +19,27 @@ def format_indian_rupees(amount):
 
 def load_model():
     """Load the trained univariate LSTM model (Amount time-series)"""
+    # Cache artifacts to avoid re-loading on every request.
+    global _CACHED_MODEL, _CACHED_SCALER
+    if _CACHED_MODEL is not None and _CACHED_SCALER is not None:
+        return _CACHED_MODEL
+
+    artifact_dir = Path(__file__).resolve().parent
+    model_path = artifact_dir / "multivariate_lstm_model.pth"
+    scaler_path = artifact_dir / "feature_scaler.pkl"
+
     model = SpendingLSTM(input_size=1, hidden_size=64, num_layers=2)
-    model.load_state_dict(torch.load("multivariate_lstm_model.pth"))
+    model.load_state_dict(torch.load(str(model_path), map_location="cpu"))
     model.eval()
+
+    _CACHED_MODEL = model
+    _CACHED_SCALER = joblib.load(str(scaler_path))
     return model
+
+
+# Module-level caches (avoid repeated disk IO in production)
+_CACHED_MODEL = None
+_CACHED_SCALER = None
 
 
 def predict_next(sequence):
@@ -36,8 +54,8 @@ def predict_next(sequence):
     """
     model = load_model()
 
-    # Load the feature scaler
-    scaler = joblib.load("feature_scaler.pkl")
+    # Load cached scaler (populated by load_model)
+    scaler = _CACHED_SCALER
 
     # Convert to numpy array
     sequence = np.array(sequence).reshape(-1, 1)

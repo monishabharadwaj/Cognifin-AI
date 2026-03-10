@@ -28,6 +28,12 @@ class BehaviourCluster:
         Returns:
             Features DataFrame with avg_amount, transaction_count, total_spending
         """
+        # Backward-compatible column normalization.
+        if "amount" not in df.columns and "Amount" in df.columns:
+            df = df.rename(columns={"Amount": "amount"})
+        if "amount" not in df.columns:
+            raise KeyError("Expected transaction column 'amount'")
+
         features = pd.DataFrame()
 
         features["avg_amount"] = df.groupby("user_id")["amount"].mean()

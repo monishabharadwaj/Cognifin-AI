@@ -1,0 +1,14 @@
+{
+  "samples": 990,
+  "train_samples": 792,
+  "test_samples": 198,
+  "seq_length": 10,
+  "batch_size": 32,
+  "epochs": 50,
+  "learning_rate": 0.001,
+  "hidden_size": 64,
+  "num_layers": 2,
+  "test_mse": 0.005621172487735748,
+  "test_mae": 0.05392853915691376,
+  "test_rmse": 0.07497448201486313
+}
