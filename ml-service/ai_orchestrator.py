@@ -40,7 +40,7 @@ class FinancialAIOrchestrator:
         prediction = predict_next(sequence)
 
         return {
-            "predicted_next_spending": float(prediction)
+           "predicted_next_spending": float(str(prediction).replace("₹", ""))
         }
 
 
