@@ -1,17 +1,23 @@
 import { create } from 'zustand';
 import type { Transaction, Budget, Goal, Trip } from '@/types/finance';
-import { mockTransactions, mockBudgets, mockGoals, mockTrips } from '@/data/mockData';
+import { apiClient } from '@/services/api';
 
 interface FinanceStore {
   transactions: Transaction[];
   budgets: Budget[];
   goals: Goal[];
   trips: Trip[];
-  addTransaction: (t: Transaction) => void;
-  deleteTransaction: (id: string) => void;
-  updateBudget: (b: Budget) => void;
-  addBudget: (b: Budget) => void;
-  deleteBudget: (id: string) => void;
+  isLoading: boolean;
+  error: string | null;
+  fetchTransactions: () => Promise<void>;
+  fetchBudgets: () => Promise<void>;
+  fetchGoals: () => Promise<void>;
+  fetchTrips: () => Promise<void>;
+  addTransaction: (t: Omit<Transaction, 'id'>) => Promise<void>;
+  deleteTransaction: (id: string) => Promise<void>;
+  updateBudget: (b: Budget) => Promise<void>;
+  addBudget: (b: Omit<Budget, 'id'>) => Promise<void>;
+  deleteBudget: (id: string) => Promise<void>;
   addGoalFunds: (goalId: string, amount: number) => void;
   addGoal: (g: Goal) => void;
   completeGoal: (id: string) => void;
@@ -20,18 +26,115 @@ interface FinanceStore {
   deleteTrip: (id: string) => void;
 }
 
-export const useFinanceStore = create<FinanceStore>((set) => ({
-  transactions: mockTransactions,
-  budgets: mockBudgets,
-  goals: mockGoals,
-  trips: mockTrips,
+export const useFinanceStore = create<FinanceStore>((set, get) => ({
+  transactions: [],
+  budgets: [],
+  goals: [],
+  trips: [],
+  isLoading: false,
+  error: null,
 
-  addTransaction: (t) => set((s) => ({ transactions: [t, ...s.transactions] })),
-  deleteTransaction: (id) => set((s) => ({ transactions: s.transactions.filter((t) => t.id !== id) })),
+  fetchTransactions: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const transactions = await apiClient.getTransactions();
+      set({ transactions, isLoading: false });
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+    }
+  },
 
-  updateBudget: (b) => set((s) => ({ budgets: s.budgets.map((x) => (x.id === b.id ? b : x)) })),
-  addBudget: (b) => set((s) => ({ budgets: [...s.budgets, b] })),
-  deleteBudget: (id) => set((s) => ({ budgets: s.budgets.filter((b) => b.id !== id) })),
+  fetchBudgets: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const budgets = await apiClient.getBudgets();
+      set({ budgets, isLoading: false });
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+    }
+  },
+
+  fetchGoals: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const goals = await apiClient.getGoals();
+      set({ goals, isLoading: false });
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+    }
+  },
+
+  fetchTrips: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const trips = await apiClient.getTrips();
+      set({ trips, isLoading: false });
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+    }
+  },
+
+  addTransaction: async (t: Omit<Transaction, 'id'>) => {
+    set({ isLoading: true, error: null });
+    try {
+      const newTransaction = await apiClient.createTransaction(t);
+      // Re-fetch all transactions to ensure consistency
+      await get().fetchTransactions();
+      set({ isLoading: false });
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
+  deleteTransaction: async (id: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      await apiClient.deleteTransaction(id);
+      // Re-fetch all transactions to ensure consistency
+      await get().fetchTransactions();
+      set({ isLoading: false });
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
+
+  updateBudget: async (b: Budget) => {
+    set({ isLoading: true, error: null });
+    try {
+      await apiClient.updateBudget(b.id, b);
+      // Re-fetch all budgets to ensure consistency
+      await get().fetchBudgets();
+      set({ isLoading: false });
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
+  addBudget: async (b: Omit<Budget, 'id'>) => {
+    set({ isLoading: true, error: null });
+    try {
+      await apiClient.createBudget(b);
+      // Re-fetch all budgets to ensure consistency
+      await get().fetchBudgets();
+      set({ isLoading: false });
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
+  deleteBudget: async (id: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      await apiClient.deleteBudget(id);
+      // Re-fetch all budgets to ensure consistency
+      await get().fetchBudgets();
+      set({ isLoading: false });
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
 
   addGoalFunds: (goalId, amount) =>
     set((s) => ({

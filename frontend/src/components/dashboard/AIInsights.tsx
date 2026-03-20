@@ -1,100 +1,258 @@
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
-import { Brain, TrendingUp, AlertTriangle, Lightbulb } from "lucide-react";
-import type { MLFinancialInsight } from "@/types/finance";
+import {
+  Brain,
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle,
+  Lightbulb,
+  Wallet,
+  Activity,
+  CheckCircle2,
+} from "lucide-react";
 
 interface AIInsightsProps {
-  insights: MLFinancialInsight[];
+  /**
+   * Backend returns insights as plain strings, e.g.:
+   *   "📈 Spending went up 10% this month"
+   *   "🎉 Awesome! Spending down 5% from last month"
+   */
+  insights: string[];
 }
 
-const container = { hidden: {}, show: { transition: { staggerChildren: 0.1 } } };
-const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const getInsightIcon = (type: MLFinancialInsight['type']) => {
-  switch (type) {
-    case 'spending_pattern':
-      return TrendingUp;
-    case 'budget_alert':
-      return AlertTriangle;
-    case 'savings_opportunity':
-      return Lightbulb;
-    case 'risk_warning':
-      return AlertTriangle;
-    default:
-      return Brain;
+function getInsightIcon(text: string) {
+  const lower = text.toLowerCase();
+
+  if (
+    lower.includes("over budget") ||
+    lower.includes("went up") ||
+    lower.includes("🚨") ||
+    lower.includes("oops") ||
+    lower.includes("watch out") ||
+    lower.includes("almost") ||
+    lower.includes("⚠️")
+  ) {
+    return <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />;
   }
+
+  if (
+    lower.includes("income") ||
+    lower.includes("salary") ||
+    lower.includes("earn") ||
+    lower.includes("💰") ||
+    lower.includes("grew")
+  ) {
+    return <TrendingUp className="h-4 w-4 flex-shrink-0 mt-0.5" />;
+  }
+
+  if (
+    lower.includes("spending down") ||
+    lower.includes("less than") ||
+    lower.includes("decreased") ||
+    lower.includes("🎉") ||
+    lower.includes("awesome")
+  ) {
+    return <TrendingDown className="h-4 w-4 flex-shrink-0 mt-0.5" />;
+  }
+
+  if (
+    lower.includes("save") ||
+    lower.includes("saving") ||
+    lower.includes("budget") ||
+    lower.includes("💡") ||
+    lower.includes("pro tip")
+  ) {
+    return <Lightbulb className="h-4 w-4 flex-shrink-0 mt-0.5" />;
+  }
+
+  if (
+    lower.includes("predict") ||
+    lower.includes("next month") ||
+    lower.includes("🔮")
+  ) {
+    return <Activity className="h-4 w-4 flex-shrink-0 mt-0.5" />;
+  }
+
+  if (
+    lower.includes("good progress") ||
+    lower.includes("✅") ||
+    lower.includes("great")
+  ) {
+    return <CheckCircle2 className="h-4 w-4 flex-shrink-0 mt-0.5" />;
+  }
+
+  if (
+    lower.includes("wallet") ||
+    lower.includes("₹") ||
+    lower.includes("spend")
+  ) {
+    return <Wallet className="h-4 w-4 flex-shrink-0 mt-0.5" />;
+  }
+
+  return <Brain className="h-4 w-4 flex-shrink-0 mt-0.5" />;
+}
+
+function getInsightStyles(text: string): {
+  card: string;
+  icon: string;
+} {
+  const lower = text.toLowerCase();
+
+  // High severity / negative
+  if (
+    lower.includes("over budget") ||
+    lower.includes("🚨") ||
+    lower.includes("oops") ||
+    lower.includes("quite high") ||
+    lower.includes("went up")
+  ) {
+    return {
+      card: "border-destructive/30 bg-destructive/5",
+      icon: "text-destructive",
+    };
+  }
+
+  // Warning / caution
+  if (
+    lower.includes("watch out") ||
+    lower.includes("almost") ||
+    lower.includes("⚠️") ||
+    lower.includes("📈") ||
+    lower.includes("📝")
+  ) {
+    return {
+      card: "border-warning/30 bg-warning/5",
+      icon: "text-warning",
+    };
+  }
+
+  // Positive / good
+  if (
+    lower.includes("awesome") ||
+    lower.includes("🎉") ||
+    lower.includes("✅") ||
+    lower.includes("good progress") ||
+    lower.includes("spending down") ||
+    lower.includes("less than") ||
+    lower.includes("income grew") ||
+    lower.includes("💰")
+  ) {
+    return {
+      card: "border-success/30 bg-success/5",
+      icon: "text-success",
+    };
+  }
+
+  // Prediction / info
+  if (
+    lower.includes("predict") ||
+    lower.includes("🔮") ||
+    lower.includes("next month")
+  ) {
+    return {
+      card: "border-violet-500/30 bg-violet-500/5",
+      icon: "text-violet-500",
+    };
+  }
+
+  // Tips / suggestions
+  if (
+    lower.includes("💡") ||
+    lower.includes("pro tip") ||
+    lower.includes("save")
+  ) {
+    return {
+      card: "border-primary/30 bg-primary/5",
+      icon: "text-primary",
+    };
+  }
+
+  // Default neutral
+  return {
+    card: "border-border bg-muted/30",
+    icon: "text-muted-foreground",
+  };
+}
+
+// ─── Animation variants ───────────────────────────────────────────────────────
+
+const container = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.07,
+    },
+  },
 };
 
-const getInsightColor = (impact: MLFinancialInsight['impact']) => {
-  switch (impact) {
-    case 'high':
-      return 'text-destructive bg-destructive/10 border-destructive/20';
-    case 'medium':
-      return 'text-warning bg-warning/10 border-warning/20';
-    case 'low':
-      return 'text-success bg-success/10 border-success/20';
-    default:
-      return 'text-muted-foreground bg-muted/50 border-border';
-  }
+const itemVariant = {
+  hidden: { opacity: 0, y: 10 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.35 } },
 };
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export function AIInsights({ insights }: AIInsightsProps) {
-  if (!insights || insights.length === 0) {
-    return (
-      <Card className="p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Brain className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-semibold">AI Insights</h3>
-        </div>
-        <p className="text-muted-foreground text-center py-8">
-          No insights available at the moment. Check back later for AI-powered recommendations.
-        </p>
-      </Card>
-    );
-  }
+  // Normalise: filter out any falsy entries
+  const validInsights = Array.isArray(insights)
+    ? insights.filter((i) => typeof i === "string" && i.trim().length > 0)
+    : [];
 
   return (
     <Card className="p-6">
+      {/* Header */}
       <div className="flex items-center gap-2 mb-4">
         <Brain className="h-5 w-5 text-primary" />
         <h3 className="text-lg font-semibold">AI Insights</h3>
-        <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
-          {insights.length} insights
-        </span>
+        {validInsights.length > 0 && (
+          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
+            {validInsights.length}{" "}
+            {validInsights.length === 1 ? "insight" : "insights"}
+          </span>
+        )}
       </div>
 
-      <motion.div variants={container} initial="hidden" animate="show" className="space-y-3">
-        {insights.map((insight, index) => {
-          const Icon = getInsightIcon(insight.type);
-          return (
-            <motion.div key={index} variants={item}>
-              <div className={`p-4 rounded-lg border ${getInsightColor(insight.impact)}`}>
-                <div className="flex items-start gap-3">
-                  <Icon className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-sm mb-1">{insight.title}</h4>
-                    <p className="text-xs opacity-80 mb-2">{insight.description}</p>
-                    {insight.actionable && insight.suggested_action && (
-                      <div className="mt-2 p-2 bg-background/50 rounded text-xs">
-                        <span className="font-medium">Suggested action:</span> {insight.suggested_action}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                      insight.impact === 'high' ? 'bg-destructive/20 text-destructive' :
-                      insight.impact === 'medium' ? 'bg-warning/20 text-warning' :
-                      'bg-success/20 text-success'
-                    }`}>
-                      {insight.impact}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          );
-        })}
-      </motion.div>
+      {/* Content */}
+      {validInsights.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-10 text-center">
+          <Brain className="h-10 w-10 text-muted-foreground mb-3 opacity-30" />
+          <p className="text-sm font-medium text-muted-foreground">
+            No AI insights available yet.
+          </p>
+          <p className="text-xs text-muted-foreground mt-1 max-w-xs">
+            Add more transactions so our AI can start analysing your spending
+            patterns and provide personalised recommendations.
+          </p>
+        </div>
+      ) : (
+        <motion.div
+          variants={container}
+          initial="hidden"
+          animate="show"
+          className="space-y-3 max-h-80 overflow-y-auto pr-1"
+        >
+          {validInsights.map((insight, index) => {
+            const styles = getInsightStyles(insight);
+            const icon = getInsightIcon(insight);
+
+            return (
+              <motion.div
+                key={index}
+                variants={itemVariant}
+                className={`flex items-start gap-3 p-3 rounded-lg border ${styles.card}`}
+              >
+                {/* Icon — clone with dynamic colour class */}
+                <span className={styles.icon}>{icon}</span>
+
+                {/* Text */}
+                <p className="text-sm leading-relaxed flex-1">{insight}</p>
+              </motion.div>
+            );
+          })}
+        </motion.div>
+      )}
     </Card>
   );
 }

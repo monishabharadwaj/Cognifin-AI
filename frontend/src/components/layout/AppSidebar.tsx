@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/sidebar";
 
 const mainItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Transactions", url: "/transactions", icon: ArrowLeftRight },
   { title: "Budget", url: "/budget", icon: PiggyBank },
   { title: "Goals", url: "/goals", icon: Target },
@@ -74,7 +74,6 @@ export function AppSidebar() {
                   >
                     <NavLink
                       to={item.url}
-                      end={item.url === "/"}
                       className="transition-colors"
                       activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
                     >

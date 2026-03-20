@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CheckCircle2, Plus, Trophy, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { differenceInDays } from "date-fns";
+import { safeToLocaleString } from "@/utils/format";
 
 const goalIcons: Record<string, string> = {
   emergency: '🛡️', vacation: '✈️', education: '📚', purchase: '💻', investment: '📈', general: '🎯',
@@ -58,7 +59,7 @@ export default function GoalsPage() {
         <div>
           <h1 className="text-2xl font-display font-bold">Financial Goals</h1>
           <p className="text-xs text-muted-foreground mt-1">
-            {completedCount}/{goals.length} completed · ₹{totalCurrent.toLocaleString("en-IN")} / ₹{totalTarget.toLocaleString("en-IN")} saved
+            {completedCount}/{goals.length} completed · ₹{safeToLocaleString(totalCurrent)} / ₹{safeToLocaleString(totalTarget)} saved
           </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
@@ -128,7 +129,7 @@ export default function GoalsPage() {
                 </div>
                 <div className="flex items-end justify-between mb-2">
                   <span className="text-2xl font-display font-bold">{pct}%</span>
-                  <span className="text-xs text-muted-foreground">₹{g.currentAmount.toLocaleString("en-IN")} / ₹{g.targetAmount.toLocaleString("en-IN")}</span>
+                  <span className="text-xs text-muted-foreground">₹{safeToLocaleString(g.currentAmount)} / ₹{safeToLocaleString(g.targetAmount)}</span>
                 </div>
                 <div className="h-3 rounded-full bg-secondary overflow-hidden">
                   <motion.div

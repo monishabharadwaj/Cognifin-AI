@@ -1,9 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import DashboardPage from "./pages/DashboardPage";
 import TransactionsPage from "./pages/TransactionsPage";
@@ -12,6 +13,8 @@ import GoalsPage from "./pages/GoalsPage";
 import TripsPage from "./pages/TripsPage";
 import AdvisorPage from "./pages/AdvisorPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
+
+import UploadPage from "./pages/UploadPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
@@ -21,8 +24,8 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 3,
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 2,
+      staleTime: 1000 * 60 * 5,
       refetchOnWindowFocus: false,
     },
     mutations: {
@@ -31,22 +34,38 @@ const queryClient = new QueryClient({
   },
 });
 
+function ProtectedPage({ children }: { children: React.ReactNode }) {
+  return (
+    <ProtectedRoute>
+      <DashboardLayout>{children}</DashboardLayout>
+    </ProtectedRoute>
+  );
+}
+
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
+        <BrowserRouter future={{ v7_relativeSplatPath: true }}>
           <ErrorBoundary
             fallback={({ error, reset }) => (
-              <div className="min-h-screen flex items-center justify-center p-4">
-                <div className="text-center">
-                  <h2 className="text-lg font-semibold mb-2">Navigation Error</h2>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {error?.message || 'An error occurred while navigating.'}
+              <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+                <div className="text-center max-w-sm">
+                  <div className="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+                    <span className="text-2xl">⚠️</span>
+                  </div>
+                  <h2 className="text-lg font-semibold mb-2">
+                    Navigation Error
+                  </h2>
+                  <p className="text-sm text-muted-foreground mb-5">
+                    {error?.message || "An error occurred while navigating."}
                   </p>
-                  <button onClick={reset} className="px-4 py-2 bg-primary text-primary-foreground rounded">
+                  <button
+                    onClick={reset}
+                    className="px-5 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+                  >
                     Go Home
                   </button>
                 </div>
@@ -54,20 +73,83 @@ const App = () => (
             )}
           >
             <Routes>
-              {/* Auth routes (no sidebar) */}
+              {/* ── Public auth routes (no layout) ── */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-              {/* App routes (with dashboard layout) */}
-              <Route path="/" element={<DashboardLayout><DashboardPage /></DashboardLayout>} />
-              <Route path="/transactions" element={<DashboardLayout><TransactionsPage /></DashboardLayout>} />
-              <Route path="/budget" element={<DashboardLayout><BudgetPage /></DashboardLayout>} />
-              <Route path="/goals" element={<DashboardLayout><GoalsPage /></DashboardLayout>} />
-              <Route path="/trips" element={<DashboardLayout><TripsPage /></DashboardLayout>} />
-              <Route path="/advisor" element={<DashboardLayout><AdvisorPage /></DashboardLayout>} />
-              <Route path="/analytics" element={<DashboardLayout><AnalyticsPage /></DashboardLayout>} />
+              {/* ── Root → login ── */}
+              <Route path="/" element={<Navigate to="/login" replace />} />
+
+              {/* ── Protected app routes (with sidebar layout) ── */}
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedPage>
+                    <DashboardPage />
+                  </ProtectedPage>
+                }
+              />
+              <Route
+                path="/transactions"
+                element={
+                  <ProtectedPage>
+                    <TransactionsPage />
+                  </ProtectedPage>
+                }
+              />
+              <Route
+                path="/budget"
+                element={
+                  <ProtectedPage>
+                    <BudgetPage />
+                  </ProtectedPage>
+                }
+              />
+              <Route
+                path="/goals"
+                element={
+                  <ProtectedPage>
+                    <GoalsPage />
+                  </ProtectedPage>
+                }
+              />
+              <Route
+                path="/trips"
+                element={
+                  <ProtectedPage>
+                    <TripsPage />
+                  </ProtectedPage>
+                }
+              />
+              <Route
+                path="/analytics"
+                element={
+                  <ProtectedPage>
+                    <AnalyticsPage />
+                  </ProtectedPage>
+                }
+              />
+              <Route
+                path="/advisor"
+                element={
+                  <ProtectedPage>
+                    <AdvisorPage />
+                  </ProtectedPage>
+                }
+              />
+
+              <Route
+                path="/upload"
+                element={
+                  <ProtectedPage>
+                    <UploadPage />
+                  </ProtectedPage>
+                }
+              />
+
+              {/* ── 404 ── */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </ErrorBoundary>

@@ -23,7 +23,10 @@ export default function LoginPage() {
     try {
       await login(email, password);
       toast({ title: "Welcome back! 👋" });
-      navigate("/");
+      // Add a small delay to ensure state is updated
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 100);
     } catch {
       toast({ title: "Login failed", description: error || "Invalid credentials", variant: "destructive" });
     }

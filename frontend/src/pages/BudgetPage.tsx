@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { useFinanceStore } from "@/stores/financeStore";
@@ -7,34 +7,51 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Pencil, Plus } from "lucide-react";
+import { Trash2, Pencil, Plus, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { safeToLocaleString } from "@/utils/format";
 
 const icons = ['🍕', '🚗', '🎬', '🛍️', '💡', '🏥', '📚', '🏠', '💳', '✈️'];
 
 export default function BudgetPage() {
-  const { budgets, addBudget, deleteBudget, updateBudget } = useFinanceStore();
+  const { budgets, addBudget, deleteBudget, updateBudget, fetchBudgets, isLoading, error } = useFinanceStore();
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({ category: '', budgetAmount: '', period: 'monthly' as 'monthly' | 'weekly' | 'yearly', icon: '🍕' });
   const { toast } = useToast();
+
+  useEffect(() => {
+    fetchBudgets();
+  }, [fetchBudgets]);
 
   const totalBudget = budgets.reduce((s, b) => s + b.budgetAmount, 0);
   const totalSpent = budgets.reduce((s, b) => s + b.spentAmount, 0);
   const overBudgetCount = budgets.filter(b => b.spentAmount > b.budgetAmount).length;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.category || !form.budgetAmount) return;
-    if (editId) {
-      updateBudget({ id: editId, category: form.category, budgetAmount: Number(form.budgetAmount), spentAmount: budgets.find(b => b.id === editId)?.spentAmount || 0, period: form.period, icon: form.icon });
-      toast({ title: "Budget updated ✅" });
-    } else {
-      addBudget({ id: Date.now().toString(), category: form.category, budgetAmount: Number(form.budgetAmount), spentAmount: 0, period: form.period, icon: form.icon });
-      toast({ title: "Budget created ✅" });
+    setIsSubmitting(true);
+    try {
+      if (editId) {
+        await updateBudget({ id: editId, category: form.category, budgetAmount: Number(form.budgetAmount), spentAmount: budgets.find(b => b.id === editId)?.spentAmount || 0, period: form.period, icon: form.icon });
+        toast({ title: "Budget updated ✅" });
+      } else {
+        await addBudget({ category: form.category, budgetAmount: Number(form.budgetAmount), spentAmount: 0, period: form.period, icon: form.icon });
+        toast({ title: "Budget created ✅" });
+      }
+      setForm({ category: '', budgetAmount: '', period: 'monthly', icon: '🍕' });
+      setEditId(null);
+      setOpen(false);
+    } catch (err: any) {
+      toast({ 
+        title: `Failed to ${editId ? 'update' : 'create'} budget`, 
+        description: err.message || "Please try again", 
+        variant: "destructive" 
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-    setForm({ category: '', budgetAmount: '', period: 'monthly', icon: '🍕' });
-    setEditId(null);
-    setOpen(false);
   };
 
   const handleEdit = (b: typeof budgets[0]) => {
@@ -43,9 +60,17 @@ export default function BudgetPage() {
     setOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    deleteBudget(id);
-    toast({ title: "Budget deleted" });
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteBudget(id);
+      toast({ title: "Budget deleted" });
+    } catch (err: any) {
+      toast({ 
+        title: "Failed to delete budget", 
+        description: err.message || "Please try again", 
+        variant: "destructive" 
+      });
+    }
   };
 
   return (
@@ -54,14 +79,19 @@ export default function BudgetPage() {
         <div>
           <h1 className="text-2xl font-display font-bold">Budget Manager</h1>
           <p className="text-xs text-muted-foreground mt-1">
-            Total: ₹{totalSpent.toLocaleString("en-IN")} / ₹{totalBudget.toLocaleString("en-IN")}
+            Total: ₹{safeToLocaleString(totalSpent)} / ₹{safeToLocaleString(totalBudget)}
             {overBudgetCount > 0 && <span className="text-destructive font-medium ml-2">· {overBudgetCount} over budget</span>}
           </p>
         </div>
-        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setEditId(null); setForm({ category: '', budgetAmount: '', period: 'monthly', icon: '🍕' }); } }}>
-          <DialogTrigger asChild>
-            <Button className="gradient-primary text-primary-foreground"><Plus className="h-4 w-4 mr-2" /> Create Budget</Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => fetchBudgets()} disabled={isLoading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setEditId(null); setForm({ category: '', budgetAmount: '', period: 'monthly', icon: '🍕' }); } }}>
+            <DialogTrigger asChild>
+              <Button className="gradient-primary text-primary-foreground"><Plus className="h-4 w-4 mr-2" /> Create Budget</Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle className="font-display">{editId ? 'Edit' : 'Create'} Budget</DialogTitle></DialogHeader>
             <div className="space-y-4 pt-2">
@@ -84,10 +114,13 @@ export default function BudgetPage() {
                   ))}
                 </div>
               </div>
-              <Button onClick={handleSave} className="w-full gradient-primary text-primary-foreground">{editId ? 'Update' : 'Create'} Budget</Button>
+              <Button onClick={handleSave} className="w-full gradient-primary text-primary-foreground" disabled={isSubmitting}>
+                {isSubmitting ? (editId ? 'Updating...' : 'Creating...') : (editId ? 'Update' : 'Create')} Budget
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -110,18 +143,18 @@ export default function BudgetPage() {
                     </div>
                   </div>
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(b)}><Pencil className="h-3 w-3" /></Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleDelete(b.id)}><Trash2 className="h-3 w-3" /></Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(b)} disabled={isLoading}><Pencil className="h-3 w-3" /></Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleDelete(b.id)} disabled={isLoading}><Trash2 className="h-3 w-3" /></Button>
                   </div>
                 </div>
                 <div className="mt-4 space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Budget</span>
-                    <span className="font-semibold">₹{b.budgetAmount.toLocaleString("en-IN")}</span>
+                    <span className="font-semibold">₹{safeToLocaleString(b.budgetAmount)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Spent</span>
-                    <span className="font-semibold">₹{b.spentAmount.toLocaleString("en-IN")}</span>
+                    <span className="font-semibold">₹{safeToLocaleString(b.spentAmount)}</span>
                   </div>
                   <div className="h-2.5 rounded-full bg-secondary overflow-hidden">
                     <motion.div className={`h-full rounded-full transition-all ${barColor}`} initial={{ width: 0 }} animate={{ width: `${Math.min(pct, 100)}%` }} transition={{ duration: 0.8 }} />
@@ -129,7 +162,7 @@ export default function BudgetPage() {
                   <div className="flex justify-between text-xs">
                     <span className="text-muted-foreground">{pct}% used</span>
                     <span className={isOver ? "text-destructive font-medium" : "text-muted-foreground"}>
-                      {isOver ? `₹${Math.abs(remaining).toLocaleString("en-IN")} over` : `₹${remaining.toLocaleString("en-IN")} left`}
+                      {isOver ? `₹${safeToLocaleString(Math.abs(remaining))} over` : `₹${safeToLocaleString(remaining)} left`}
                     </span>
                   </div>
                   <p className="text-[10px] text-muted-foreground capitalize">{b.period} budget</p>
@@ -139,6 +172,25 @@ export default function BudgetPage() {
           );
         })}
       </div>
+      {!isLoading && budgets.length === 0 && (
+        <div className="text-center py-12">
+          <div className="text-muted-foreground mb-4">
+            {error ? `Error: ${error}` : "No budgets created yet"}
+          </div>
+          {!error && (
+            <Button onClick={() => setOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Your First Budget
+            </Button>
+          )}
+        </div>
+      )}
+      {isLoading && (
+        <div className="text-center py-12">
+          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-muted-foreground" />
+          <div className="text-muted-foreground">Loading budgets...</div>
+        </div>
+      )}
     </div>
   );
 }

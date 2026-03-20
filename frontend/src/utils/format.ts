@@ -1,5 +1,8 @@
 // Currency formatting
-export function formatCurrency(amount: number, currency: string = 'INR', maximumFractionDigits: number = 0): string {
+export function formatCurrency(amount: number | undefined | null, currency: string = 'INR', maximumFractionDigits: number = 0): string {
+  if (amount == null || isNaN(amount)) {
+    return `₹0`;
+  }
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency,
@@ -7,8 +10,32 @@ export function formatCurrency(amount: number, currency: string = 'INR', maximum
   }).format(amount);
 }
 
+// Safe number formatting for direct toLocaleString usage
+export function safeToLocaleString(value: number | undefined | null, locale: string = 'en-IN'): string {
+  if (value == null || isNaN(value)) {
+    return '0';
+  }
+  return value.toLocaleString(locale);
+}
+
+// Safe toFixed for decimal formatting
+export function safeToFixed(value: number | undefined | null, digits: number = 1): string {
+  if (value == null || isNaN(value)) {
+    return '0.0';
+  }
+  return value.toFixed(digits);
+}
+
+// Safe array handling
+export function safeArray<T>(array: T[] | undefined | null): T[] {
+  return Array.isArray(array) ? array : [];
+}
+
 // Percentage formatting
-export function formatPercentage(value: number, maximumFractionDigits: number = 1): string {
+export function formatPercentage(value: number | undefined | null, maximumFractionDigits: number = 1): string {
+  if (value == null || isNaN(value)) {
+    return '0.0%';
+  }
   return `${value.toFixed(maximumFractionDigits)}%`;
 }
 
@@ -47,24 +74,27 @@ export function formatDate(date: string | Date, format: 'short' | 'long' | 'rela
 
 // Number formatting with abbreviations
 export function formatNumber(value: number, abbreviate: boolean = false): string {
+  if (value == null || isNaN(value)) {
+    return '0';
+  }
   if (!abbreviate) {
     return value.toLocaleString('en-IN');
   }
 
   if (value >= 10000000) {
-    return `${(value / 10000000).toFixed(1)}Cr`;
+    return `${safeToFixed(value / 10000000)}Cr`;
   }
   if (value >= 100000) {
-    return `${(value / 100000).toFixed(1)}L`;
+    return `${safeToFixed(value / 100000)}L`;
   }
   if (value >= 1000) {
-    return `${(value / 1000).toFixed(1)}K`;
+    return `${safeToFixed(value / 1000)}K`;
   }
   return value.toString();
 }
 
 // Transaction category colors
-export const CATEGORY_COLORS: Record<string, string> = [
+export const CATEGORY_COLORS: string[] = [
   'hsl(217, 91%, 60%)',
   'hsl(142, 71%, 45%)',
   'hsl(38, 92%, 50%)',
