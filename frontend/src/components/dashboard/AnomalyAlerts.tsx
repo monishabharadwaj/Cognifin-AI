@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
-import { AlertTriangle, ShieldAlert, ShieldCheck, X, Info } from "lucide-react";
+import { AlertTriangle, ShieldAlert, ShieldCheck, X, Info, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
@@ -239,123 +239,118 @@ export function AnomalyAlerts({ flaggedTransactions }: AnomalyAlertsProps) {
   const highCount = active.filter((a) => a.severity === "high").length;
 
   return (
-    <Card className="p-6 border-yellow-200 bg-yellow-50/30">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="p-8 rounded-[32px] glass-card-charcoal border-white/[0.05] relative overflow-hidden group mb-8"
+    >
+      {/* Background ambient glow focus */}
+      <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[100px] -mr-32 -mt-32 pointer-events-none" />
+      
       {/* ── Header ── */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center">
-            <AlertTriangle className="h-4 w-4 text-yellow-600" />
+      <div className="flex items-center justify-between mb-8 relative z-10">
+        <div className="flex items-center gap-4">
+          <div className="h-14 w-14 rounded-2xl flex items-center justify-center relative shadow-2xl"
+               style={{ background: "linear-gradient(135deg, rgba(16,185,129,0.2), rgba(16,185,129,0.05))", border: "1px solid rgba(16,185,129,0.3)" }}>
+            <div className="absolute inset-0 pulse-glow-emerald opacity-40 rounded-2xl" />
+            <AlertTriangle className="h-7 w-7 text-[#10B981] relative z-10" strokeWidth={1.5} />
           </div>
           <div>
-            <h3 className="text-sm font-semibold leading-tight">
-              Anomaly Alerts
+            <h3 className="text-xl font-bold text-white tracking-tight uppercase">
+              Anomaly Intelligence
             </h3>
-            <p className="text-xs text-muted-foreground">
-              {active.length} transaction{active.length !== 1 ? "s" : ""}{" "}
-              flagged by AI
-              {highCount > 0 && (
-                <span className="text-red-600 font-medium ml-1">
-                  · {highCount} high risk
-                </span>
-              )}
+            <p className="text-sm text-slate-500 font-medium mt-1">
+              AI has flagged <span className="text-white font-bold">{active.length}</span> unusual pattern{active.length !== 1 ? "s" : ""}
             </p>
           </div>
         </div>
 
-        {/* High-risk count pill */}
+        {/* High-risk count badge */}
         {highCount > 0 && (
-          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-red-100 text-red-700 border border-red-200">
-            {highCount} HIGH
-          </span>
+          <div className="px-4 py-2 rounded-full glass-card-ruby border-red-500/30 flex items-center gap-2">
+            <ShieldAlert className="h-4 w-4 text-red-500" />
+            <span className="text-xs font-black text-red-500 uppercase tracking-widest">{highCount} High Risk</span>
+          </div>
         )}
       </div>
 
       {/* ── Alert list ── */}
-      <AnimatePresence initial={false}>
-        <div className="space-y-3">
-          {active.map((alert) => {
-            const styles = getSeverityStyles(alert.severity);
-            const Icon = getSeverityIcon(alert.severity);
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
+        <AnimatePresence mode="popLayout">
+          {active.map((alert, index) => {
+            const isHigh = alert.severity === "high";
 
             return (
               <motion.div
                 key={alert.id}
-                initial={{ opacity: 0, y: -8, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, x: 40, scale: 0.96 }}
-                transition={{ duration: 0.25 }}
-                className={`rounded-xl border p-4 ${styles.card}`}
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, x: -20 }}
+                transition={{ 
+                  duration: 0.4, 
+                  delay: index * 0.1,
+                  type: "spring",
+                  stiffness: 260,
+                  damping: 20 
+                }}
+                className={`rounded-2xl border p-5 relative group/item transition-all duration-300 hover:shadow-2xl ${
+                  isHigh ? "glass-card-ruby" : "glass-card-charcoal hover:border-emerald-500/30"
+                }`}
               >
-                <div className="flex items-start justify-between gap-3">
-                  {/* Left content */}
-                  <div className="flex items-start gap-3 flex-1 min-w-0">
-                    {/* Severity icon */}
-                    <div className={`mt-0.5 shrink-0 ${styles.icon}`}>
-                      <Icon className="h-4 w-4" />
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-4 flex-1 min-w-0">
+                    <div className={`mt-1 p-2 rounded-lg shrink-0 ${isHigh ? "bg-red-500/10 text-red-500" : "bg-emerald-500/10 text-[#10B981]"}`}>
+                      {isHigh ? <ShieldAlert className="h-5 w-5" /> : <ShieldCheck className="h-5 w-5" />}
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      {/* Title row */}
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <span className="text-sm font-semibold truncate">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="text-base font-bold text-white truncate group-hover/item:text-emerald-400 transition-colors">
                           {alert.description}
                         </span>
-                        <span
-                          className={`shrink-0 text-xs px-2 py-0.5 rounded-full border font-medium uppercase tracking-wide ${styles.badge}`}
-                        >
-                          {alert.severity}
-                        </span>
+                        <div className={`h-1.5 w-1.5 rounded-full animate-pulse ${isHigh ? "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]" : "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"}`} />
                       </div>
 
-                      {/* Reason */}
-                      <p className="text-xs text-muted-foreground leading-relaxed mb-2">
-                        {alert.reason}
+                      <p className="text-xs text-slate-400 leading-relaxed mb-4 line-clamp-2 italic">
+                        "{alert.reason}"
                       </p>
 
-                      {/* Meta row */}
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                        <span className="font-medium text-foreground">
+                      <div className="flex items-center justify-between mt-auto pt-3 border-t border-white/[0.05]">
+                        <span className="text-sm font-black text-white px-2.5 py-1 rounded-lg bg-white/[0.05]">
                           {formatCurrency(alert.amount)}
                         </span>
-                        {alert.date && <span>{formatDate(alert.date)}</span>}
-                        <span className="inline-flex items-center gap-1">
-                          <span
-                            className={`h-1.5 w-1.5 rounded-full ${styles.dot}`}
-                          />
-                          {cap(alert.category)}
-                        </span>
+                        <div className="flex items-center gap-2">
+                           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{formatDate(alert.date)}</span>
+                           <div className="h-1 w-1 rounded-full bg-slate-700" />
+                           <span className="text-[10px] font-bold text-[#10B981] uppercase tracking-widest">{alert.category}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Dismiss button */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 shrink-0 rounded-full hover:bg-black/10"
-                    onClick={() =>
-                      setDismissed((prev) => new Set([...prev, alert.id]))
-                    }
-                    aria-label="Dismiss alert"
+                  <button
+                    onClick={() => setDismissed((prev) => new Set([...prev, alert.id]))}
+                    className="h-8 w-8 rounded-full flex items-center justify-center text-slate-600 hover:text-white hover:bg-white/10 transition-all shrink-0"
                   >
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
               </motion.div>
             );
           })}
-        </div>
-      </AnimatePresence>
+        </AnimatePresence>
+      </div>
 
       {/* ── Footer note ── */}
-      <div className="mt-4 flex items-start gap-2 p-3 rounded-lg bg-white/60 border border-yellow-100">
-        <ShieldCheck className="h-4 w-4 text-yellow-600 shrink-0 mt-0.5" />
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          These transactions were flagged by our AI risk model as potentially
-          unusual. Please review them to confirm they are legitimate. You can
-          dismiss alerts you have already reviewed.
+      <div className="mt-8 p-4 rounded-xl bg-black/40 border border-white/[0.05] flex items-center gap-4 relative z-10">
+        <div className="h-10 w-10 rounded-full bg-[#10B981]/10 flex items-center justify-center shrink-0">
+          <Zap className="h-5 w-5 text-[#10B981] animate-pulse" />
+        </div>
+        <p className="text-xs text-slate-500 leading-relaxed font-medium">
+          Cognifin AI monitors every transaction in real-time. Flagged items require manual verification to maintain portfolio integrity. <span className="text-[#10B981] cursor-help border-b border-[#10B981]/30">Learn more about our risk model.</span>
         </p>
       </div>
-    </Card>
+    </motion.div>
   );
 }
+

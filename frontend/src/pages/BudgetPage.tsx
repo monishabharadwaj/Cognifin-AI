@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { useFinanceStore } from "@/stores/financeStore";
 import { Button } from "@/components/ui/button";
@@ -7,11 +7,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Pencil, Plus, RefreshCw } from "lucide-react";
+import { Trash2, Pencil, Plus, RefreshCw, AlertTriangle, Target, PieChart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { safeToLocaleString } from "@/utils/format";
 
-const icons = ['🍕', '🚗', '🎬', '🛍️', '💡', '🏥', '📚', '🏠', '💳', '✈️'];
+const icons = ['🍕', '🚗', '🎬', '🛍️', '💡', '🏥', '📚', '🏠', '💳', '✈️', '🐶', '☕'];
 
 export default function BudgetPage() {
   const { budgets, addBudget, deleteBudget, updateBudget, fetchBudgets, isLoading, error } = useFinanceStore();
@@ -63,7 +63,7 @@ export default function BudgetPage() {
   const handleDelete = async (id: string) => {
     try {
       await deleteBudget(id);
-      toast({ title: "Budget deleted" });
+      toast({ title: "Budget deleted 🗑️" });
     } catch (err: any) {
       toast({ 
         title: "Failed to delete budget", 
@@ -74,121 +74,165 @@ export default function BudgetPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-display font-bold">Budget Manager</h1>
-          <p className="text-xs text-muted-foreground mt-1">
-            Total: ₹{safeToLocaleString(totalSpent)} / ₹{safeToLocaleString(totalBudget)}
-            {overBudgetCount > 0 && <span className="text-destructive font-medium ml-2">· {overBudgetCount} over budget</span>}
-          </p>
+    <div className="space-y-6 pb-12">
+      {/* Premium Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 bg-card border border-border/50 rounded-2xl shadow-sm relative overflow-hidden">
+        <div className="relative z-10 flex items-center gap-4">
+          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center shadow-lg shadow-primary/20 shrink-0">
+            <PieChart className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-display font-bold tracking-tight">Active Budgets</h1>
+            <div className="text-sm font-medium mt-1.5 flex flex-wrap items-center gap-2">
+              <span className="text-muted-foreground">Total Managed:</span>
+              <span className="text-foreground border px-2 py-0.5 rounded-md">₹{safeToLocaleString(totalSpent)} / ₹{safeToLocaleString(totalBudget)}</span>
+              {overBudgetCount > 0 && (
+                <span className="text-xs bg-destructive/10 text-destructive border border-destructive/20 px-2 py-0.5 rounded-full flex items-center shadow-sm">
+                  <AlertTriangle className="w-3 h-3 mr-1" /> {overBudgetCount} exceeded
+                </span>
+              )}
+            </div>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => fetchBudgets()} disabled={isLoading}>
+        <div className="flex gap-2 relative z-10">
+          <Button variant="outline" size="sm" onClick={() => fetchBudgets()} disabled={isLoading} className="rounded-full shadow-sm">
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
           <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setEditId(null); setForm({ category: '', budgetAmount: '', period: 'monthly', icon: '🍕' }); } }}>
             <DialogTrigger asChild>
-              <Button className="gradient-primary text-primary-foreground"><Plus className="h-4 w-4 mr-2" /> Create Budget</Button>
-            </DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle className="font-display">{editId ? 'Edit' : 'Create'} Budget</DialogTitle></DialogHeader>
-            <div className="space-y-4 pt-2">
-              <div><Label>Category</Label><Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="e.g. Food & Groceries" /></div>
-              <div><Label>Budget Amount (₹)</Label><Input type="number" value={form.budgetAmount} onChange={(e) => setForm({ ...form, budgetAmount: e.target.value })} placeholder="10000" /></div>
-              <div><Label>Period</Label>
-                <Select value={form.period} onValueChange={(v: any) => setForm({ ...form, period: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                    <SelectItem value="yearly">Yearly</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div><Label>Icon</Label>
-                <div className="flex gap-2 flex-wrap">
-                  {icons.map(ic => (
-                    <button key={ic} onClick={() => setForm({ ...form, icon: ic })} className={`text-2xl p-1 rounded-lg transition-colors ${form.icon === ic ? 'bg-primary/10 ring-2 ring-primary' : 'hover:bg-muted'}`}>{ic}</button>
-                  ))}
-                </div>
-              </div>
-              <Button onClick={handleSave} className="w-full gradient-primary text-primary-foreground" disabled={isSubmitting}>
-                {isSubmitting ? (editId ? 'Updating...' : 'Creating...') : (editId ? 'Update' : 'Create')} Budget
+              <Button className="rounded-full shadow-md bg-gradient-to-r from-primary to-purple-600 hover:shadow-lg hover:-translate-y-0.5 transition-all text-white">
+                <Plus className="h-4 w-4 mr-2" /> New Budget
               </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px] rounded-2xl">
+              <DialogHeader><DialogTitle className="font-display text-xl">{editId ? 'Edit' : 'Create'} Budget</DialogTitle></DialogHeader>
+              <div className="space-y-4 pt-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Category Name</Label>
+                  <Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="e.g. Dining Out" className="h-10 rounded-lg" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Budget Limit (₹)</Label>
+                  <Input type="number" value={form.budgetAmount} onChange={(e) => setForm({ ...form, budgetAmount: e.target.value })} placeholder="5000" className="text-lg font-medium h-12 rounded-xl" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Time Period</Label>
+                  <Select value={form.period} onValueChange={(v: any) => setForm({ ...form, period: v })}>
+                    <SelectTrigger className="h-10 rounded-lg"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="yearly">Yearly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Select Icon</Label>
+                  <div className="flex gap-2 flex-wrap p-2 bg-muted/30 rounded-xl border">
+                    {icons.map(ic => (
+                      <button key={ic} onClick={() => setForm({ ...form, icon: ic })} className={`text-2xl h-10 w-10 flex items-center justify-center rounded-lg transition-all ${form.icon === ic ? 'bg-primary border-primary text-white shadow-md shadow-primary/30 scale-110' : 'hover:bg-muted bg-background border border-transparent'}`}>
+                        {ic}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <Button onClick={handleSave} className="w-full h-12 text-md mt-2 rounded-xl font-bold bg-gradient-to-r from-primary to-purple-600 text-white shadow-lg hover:shadow-xl transition-all" disabled={isSubmitting}>
+                  {isSubmitting ? <span className="animate-pulse">Saving...</span> : (editId ? 'Update Budget' : 'Create Budget')}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {budgets.map((b, i) => {
-          const pct = Math.round((b.spentAmount / b.budgetAmount) * 100);
-          const remaining = b.budgetAmount - b.spentAmount;
-          const isOver = remaining < 0;
-          const status = pct > 100 ? "Over Budget" : pct > 90 ? "Critical" : pct > 70 ? "Warning" : "On Track";
-          const statusColor = pct > 100 ? "text-destructive bg-destructive/10" : pct > 90 ? "text-destructive bg-destructive/10" : pct > 70 ? "text-warning bg-warning/10" : "text-success bg-success/10";
-          const barColor = pct > 90 ? "bg-destructive" : pct > 70 ? "bg-warning" : "bg-success";
-          return (
-            <motion.div key={b.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
-              <Card className={`glass-card p-5 hover:shadow-md transition-shadow ${isOver ? 'ring-1 ring-destructive/30' : ''}`}>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{b.icon}</span>
-                    <div>
-                      <h3 className="font-semibold text-sm">{b.category}</h3>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${statusColor}`}>{status}</span>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <AnimatePresence>
+          {budgets.map((b, i) => {
+            const pct = Math.round((b.spentAmount / b.budgetAmount) * 100);
+            const remaining = b.budgetAmount - b.spentAmount;
+            const isOver = remaining < 0;
+            const status = pct >= 100 ? "Limit Exceeded" : pct >= 90 ? "Critical" : pct >= 75 ? "Warning" : "Healthy";
+            const statusColor = pct >= 100 ? "text-destructive bg-destructive/10 border-destructive/20" : pct >= 90 ? "text-destructive bg-destructive/10 border-destructive/20" : pct >= 75 ? "text-warning bg-warning/10 border-warning/20" : "text-success bg-success/10 border-success/20";
+            const barColor = pct >= 90 ? "bg-destructive" : pct >= 75 ? "bg-warning" : "bg-success";
+            
+            return (
+              <motion.div key={b.id} layout initial={{ opacity: 0, scale: 0.95, y: 15 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ delay: Math.min(i * 0.05, 0.4) }}>
+                <Card className={`p-6 rounded-2xl border bg-card/80 backdrop-blur-lg hover:shadow-lg transition-all group overflow-hidden relative ${isOver ? 'border-destructive/30 shadow-destructive/5' : 'border-border/50'}`}>
+                  {isOver && <div className="absolute top-0 right-0 w-32 h-32 bg-destructive/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" />}
+                  
+                  <div className="flex items-start justify-between relative z-10">
+                    <div className="flex items-center gap-4">
+                      <div className="h-14 w-14 rounded-2xl bg-muted/50 border flex items-center justify-center text-3xl shadow-sm">
+                        {b.icon}
+                      </div>
+                      <div>
+                        <h3 className="font-display font-bold text-lg leading-tight">{b.category}</h3>
+                        <div className="flex items-center gap-2 mt-1.5">
+                          <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wide border ${statusColor}`}>
+                            {status}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground font-medium bg-muted px-1.5 py-0.5 rounded">
+                            {b.period}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg" onClick={() => handleEdit(b)} disabled={isLoading}><Pencil className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg" onClick={() => handleDelete(b.id)} disabled={isLoading}><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   </div>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(b)} disabled={isLoading}><Pencil className="h-3 w-3" /></Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleDelete(b.id)} disabled={isLoading}><Trash2 className="h-3 w-3" /></Button>
+
+                  <div className="mt-6 space-y-3 relative z-10">
+                    <div className="flex justify-between items-end">
+                      <p className="text-3xl font-display font-bold tracking-tight">₹{safeToLocaleString(b.spentAmount)}</p>
+                      <p className="text-sm font-medium text-muted-foreground mb-1">of ₹{safeToLocaleString(b.budgetAmount)}</p>
+                    </div>
+                    
+                    <div className="h-3 rounded-full bg-secondary overflow-hidden border border-border/40 relative">
+                      <motion.div 
+                        className={`absolute top-0 left-0 h-full rounded-full transition-all ${barColor}`} 
+                        initial={{ width: 0 }} 
+                        animate={{ width: `${Math.min(pct, 100)}%` }} 
+                        transition={{ duration: 0.8, ease: "easeOut" }} 
+                      />
+                    </div>
+                    
+                    <div className="flex justify-between items-center pt-1">
+                      <span className="text-sm font-semibold text-muted-foreground">{pct}% Used</span>
+                      <span className={`text-sm font-bold ${isOver ? "text-destructive" : "text-success"}`}>
+                        {isOver ? `₹${safeToLocaleString(Math.abs(remaining))} Over` : `₹${safeToLocaleString(remaining)} Left`}
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <div className="mt-4 space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Budget</span>
-                    <span className="font-semibold">₹{safeToLocaleString(b.budgetAmount)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Spent</span>
-                    <span className="font-semibold">₹{safeToLocaleString(b.spentAmount)}</span>
-                  </div>
-                  <div className="h-2.5 rounded-full bg-secondary overflow-hidden">
-                    <motion.div className={`h-full rounded-full transition-all ${barColor}`} initial={{ width: 0 }} animate={{ width: `${Math.min(pct, 100)}%` }} transition={{ duration: 0.8 }} />
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">{pct}% used</span>
-                    <span className={isOver ? "text-destructive font-medium" : "text-muted-foreground"}>
-                      {isOver ? `₹${safeToLocaleString(Math.abs(remaining))} over` : `₹${safeToLocaleString(remaining)} left`}
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground capitalize">{b.period} budget</p>
-                </div>
-              </Card>
-            </motion.div>
-          );
-        })}
+                </Card>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
       </div>
+
       {!isLoading && budgets.length === 0 && (
-        <div className="text-center py-12">
-          <div className="text-muted-foreground mb-4">
-            {error ? `Error: ${error}` : "No budgets created yet"}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20 bg-card/40 border border-dashed border-border rounded-3xl">
+          <div className="h-20 w-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
+            <Target className="h-10 w-10 text-muted-foreground opacity-50" />
           </div>
+          <h3 className="text-xl font-display font-bold mb-2">{error ? `Error: ${error}` : "No Active Budgets"}</h3>
+          <p className="text-muted-foreground max-w-sm mx-auto mb-6">Create budgets to track your spending and hit your financial goals faster.</p>
           {!error && (
-            <Button onClick={() => setOpen(true)}>
+            <Button onClick={() => setOpen(true)} className="rounded-full h-12 px-6 shadow-md shadow-primary/20">
               <Plus className="h-4 w-4 mr-2" />
-              Create Your First Budget
+              Create First Budget
             </Button>
           )}
-        </div>
+        </motion.div>
       )}
-      {isLoading && (
-        <div className="text-center py-12">
-          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-muted-foreground" />
-          <div className="text-muted-foreground">Loading budgets...</div>
+
+      {isLoading && budgets.length === 0 && (
+        <div className="text-center py-24">
+          <RefreshCw className="h-10 w-10 animate-spin mx-auto mb-4 text-primary opacity-50" />
+          <p className="font-medium text-muted-foreground animate-pulse">Loading budgets...</p>
         </div>
       )}
     </div>

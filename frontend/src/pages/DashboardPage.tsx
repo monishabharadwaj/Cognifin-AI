@@ -16,7 +16,8 @@ import {
   Activity,
   BarChart3,
   Lightbulb,
-  Wallet
+  Wallet,
+  Sparkles
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { safeToLocaleString, formatCurrency } from "@/utils/format";
@@ -25,6 +26,7 @@ import { CategoryBarChart } from "@/components/charts/CategoryBarChart";
 import { IncomeExpenseChart } from "@/components/charts/IncomeExpenseChart";
 import { RecentTransactions } from "@/components/dashboard/RecentTransactions";
 import { AnomalyAlerts } from "@/components/dashboard/AnomalyAlerts";
+import { CognifinCube } from "@/components/dashboard/CognifinCube";
 
 // Normalisation helpers
 function normaliseCategoryData(raw: AIDashboardData["categories"]): CategoryEntry[] {
@@ -77,7 +79,7 @@ function getInsightIcon(text: string) {
   if (lower.includes("spend") || lower.includes("expense") || lower.includes("budget")) return <AlertTriangle className="h-4 w-4 text-warning mt-0.5" />;
   if (lower.includes("income") || lower.includes("salary")) return <TrendingUp className="h-4 w-4 text-success mt-0.5" />;
   if (lower.includes("save") || lower.includes("saving")) return <Wallet className="h-4 w-4 text-primary mt-0.5" />;
-  if (lower.includes("predict")) return <Activity className="h-4 w-4 text-violet-500 mt-0.5" />;
+  if (lower.includes("predict")) return <Activity className="h-4 w-4 text-purple-500 mt-0.5" />;
   return <Lightbulb className="h-4 w-4 text-primary mt-0.5" />;
 }
 
@@ -114,8 +116,8 @@ export default function DashboardPage() {
   if (dashboardLoading) {
     return (
       <div className="space-y-6">
-        <div className="flex justify-between items-center"><h1 className="text-2xl font-bold">Dashboard</h1><RefreshCw className="h-5 w-5 animate-spin" /></div>
-        <div className="grid grid-cols-4 gap-4"><Card className="h-24 animate-pulse bg-muted" /><Card className="h-24 animate-pulse bg-muted" /><Card className="h-24 animate-pulse bg-muted" /><Card className="h-24 animate-pulse bg-muted" /></div>
+        <div className="flex justify-between items-center"><h1 className="text-2xl font-bold">Overview</h1><RefreshCw className="h-5 w-5 animate-spin" /></div>
+        <div className="grid grid-cols-4 gap-4"><Card className="h-28 animate-pulse bg-muted/60 rounded-2xl" /><Card className="h-28 animate-pulse bg-muted/60 rounded-2xl" /><Card className="h-28 animate-pulse bg-muted/60 rounded-2xl" /><Card className="h-28 animate-pulse bg-muted/60 rounded-2xl" /></div>
       </div>
     );
   }
@@ -140,91 +142,125 @@ export default function DashboardPage() {
         .filter((t: any) => t.type !== 'income' && t.type !== 'credit');
 
   return (
-    <div className="space-y-6 pb-12">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-display font-bold">Overview</h1>
-          <p className="text-sm text-muted-foreground mt-1">Your automated financial intelligence report</p>
+    <div className="space-y-6 pb-12 relative">
+      
+      {/* Premium Dashboard Header */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 p-8 glass-card border-white/[0.05] rounded-[32px] shadow-2xl relative overflow-hidden"
+      >
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-emerald-500/5 to-purple-500/5 pointer-events-none" />
+        <CognifinCube />
+        <div className="relative z-10 flex items-center gap-6">
+          <div className="h-16 w-16 rounded-2xl flex items-center justify-center relative shadow-2xl group" 
+               style={{ background: "linear-gradient(135deg, #10B981, #8B5CF6)", boxShadow: "0 0 30px rgba(16,185,129,0.3)" }}>
+            <div className="absolute inset-0 pulse-glow-emerald opacity-60 rounded-2xl" />
+            <Sparkles className="h-8 w-8 text-white relative z-10" strokeWidth={1.5} />
+          </div>
+          <div>
+            <h1 className="text-4xl font-black text-white tracking-tighter uppercase leading-none">
+              Financial Overview
+            </h1>
+            <p className="text-sm text-slate-500 mt-2 font-bold uppercase tracking-[0.2em] flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#10B981] animate-pulse" />
+              AI-Curated Wealth Intelligence
+            </p>
+          </div>
         </div>
-        <Button variant="outline" size="sm" onClick={loadDashboardData}><RefreshCw className="h-4 w-4 mr-2" /> Refresh</Button>
-      </div>
+        <Button variant="outline" size="lg" onClick={loadDashboardData} className="relative z-10 rounded-xl glass-card border-white/[0.1] hover:bg-white/[0.05] text-white font-bold transition-all px-6">
+          <RefreshCw className="h-4 w-4 mr-2" /> REFRESH HUB
+        </Button>
+      </motion.div>
 
-      {flaggedTransactions.length > 0 && <AnomalyAlerts flaggedTransactions={flaggedTransactions} />}
+      {flaggedTransactions.length > 0 && summary.total_expenses > 5000 && <AnomalyAlerts flaggedTransactions={flaggedTransactions} />}
 
       {/* Primary KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <Card className="glass-card p-5 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent relative overflow-hidden">
-            <div className="flex justify-between items-center z-10 relative">
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1, duration: 0.4 }}>
+          <Card className="p-6 rounded-2xl border-none bg-gradient-to-br from-primary to-purple-700 text-white shadow-xl shadow-primary/20 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10 transition-transform group-hover:scale-150 duration-500" />
+            <div className="flex justify-between items-start z-10 relative">
               <div>
-                <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Net Balance</p>
-                <p className="text-3xl font-bold mt-1 tracking-tight text-primary">₹{safeToLocaleString(summary.balance)}</p>
+                <p className="text-xs font-semibold tracking-wider text-white/80 uppercase">Net Balance</p>
+                <p className="text-3xl font-display font-bold mt-2 tracking-tight">₹{safeToLocaleString(summary.balance)}</p>
               </div>
-              <div className="p-3 bg-primary/10 rounded-xl"><DollarSign className="h-6 w-6 text-primary" /></div>
+              <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm"><DollarSign className="h-6 w-6 text-white" /></div>
             </div>
           </Card>
         </motion.div>
+        
         <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <Card className="glass-card p-5">
-            <div className="flex justify-between items-center">
+          <Card className="p-6 rounded-2xl border border-border/50 shadow-sm bg-card/80 backdrop-blur-lg hover:shadow-md transition-shadow">
+            <div className="flex justify-between items-start">
               <div>
                 <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Total Income</p>
-                <p className="text-2xl font-bold mt-1 text-success">₹{safeToLocaleString(summary.total_income)}</p>
+                <p className="text-2xl font-display font-bold mt-2 text-success">₹{safeToLocaleString(summary.total_income)}</p>
               </div>
-              <div className="p-3 bg-success/10 rounded-xl"><TrendingUp className="h-5 w-5 text-success" /></div>
+              <div className="p-3 bg-success/15 rounded-xl"><TrendingUp className="h-5 w-5 text-success" /></div>
             </div>
           </Card>
         </motion.div>
+
         <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-          <Card className="glass-card p-5">
-            <div className="flex justify-between items-center">
+          <Card className="p-6 rounded-2xl border border-border/50 shadow-sm bg-card/80 backdrop-blur-lg hover:shadow-md transition-shadow">
+            <div className="flex justify-between items-start">
               <div>
                 <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Total Expenses</p>
-                <p className="text-2xl font-bold mt-1 text-destructive">₹{safeToLocaleString(summary.total_expenses)}</p>
+                <p className="text-2xl font-display font-bold mt-2 text-foreground">₹{safeToLocaleString(summary.total_expenses)}</p>
               </div>
-              <div className="p-3 bg-destructive/10 rounded-xl"><TrendingDown className="h-5 w-5 text-destructive" /></div>
+              <div className="p-3 bg-primary/10 rounded-xl"><TrendingDown className="h-5 w-5 text-primary" /></div>
             </div>
           </Card>
         </motion.div>
+
         <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-          <Card className="glass-card p-5">
-            <div className="flex justify-between items-center">
+          <Card className="p-6 rounded-2xl border border-border/50 shadow-sm bg-card/80 backdrop-blur-lg hover:shadow-md transition-shadow">
+            <div className="flex justify-between items-start">
               <div>
                 <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Savings Rate</p>
-                <p className="text-2xl font-bold mt-1">{summary.savings_rate.toFixed(1)}%</p>
+                <p className="text-2xl font-display font-bold mt-2 text-purple-600 dark:text-purple-400">{summary.savings_rate.toFixed(1)}%</p>
               </div>
-              <div className="p-3 bg-warning/10 rounded-xl"><Target className="h-5 w-5 text-warning" /></div>
+              <div className="p-3 bg-purple-500/15 rounded-xl"><Target className="h-5 w-5 text-purple-600 dark:text-purple-400" /></div>
             </div>
           </Card>
         </motion.div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column - Main Charts (2/3 width) */}
-        <div className="lg:col-span-2 space-y-6">
-          <motion.div initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}>
-            <Card className="glass-card p-6">
-              <h3 className="text-lg font-display font-semibold mb-6 flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-primary" /> Monthly Cashflow
+        <div className="lg:col-span-2 space-y-8">
+          <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}>
+            <Card className="glass-card-charcoal p-8 rounded-[32px] border-white/[0.05]">
+              <h3 className="text-xl font-bold mb-8 flex items-center gap-3 text-white uppercase tracking-tight">
+                <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                  <TrendingUp className="h-4 w-4 text-[#10B981]" />
+                </div>
+                Monthly Cashflow
               </h3>
               <IncomeExpenseChart data={monthlyEntries} />
             </Card>
           </motion.div>
-          <motion.div initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 }}>
-            <Card className="glass-card p-6">
-              <h3 className="text-lg font-display font-semibold mb-6 flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-primary" /> Spending by Category
+          <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 }}>
+            <Card className="glass-card-charcoal p-8 rounded-[32px] border-white/[0.05]">
+              <h3 className="text-xl font-bold mb-8 flex items-center gap-3 text-white uppercase tracking-tight">
+                 <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                  <BarChart3 className="h-4 w-4 text-[#10B981]" />
+                </div>
+                Spending by Category
               </h3>
               <CategoryBarChart data={categoryEntries} />
               
               {/* Spending Insights Banner embedded inside the chart card */}
               {categoryEntries.length > 0 && (
-                <div className="mt-4 p-4 rounded-xl bg-muted/40 border flex items-start gap-3">
-                   <Lightbulb className="h-5 w-5 text-warning mt-0.5" />
+                <div className="mt-8 p-5 rounded-2xl bg-white/[0.02] border border-white/[0.05] flex items-start gap-4 transition-all hover:bg-white/[0.04]">
+                   <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
+                      <Lightbulb className="h-5 w-5 text-amber-500" />
+                   </div>
                    <div>
-                     <p className="text-sm font-semibold">Spending Highlight</p>
-                     <p className="text-xs text-muted-foreground mt-1">
-                       Your top expense this month is <strong className="text-foreground">{categoryEntries[0].name}</strong>, accounting for <strong className="text-foreground">{categoryEntries[0].percentage}%</strong> of your total categorized spending.
+                     <p className="text-sm font-bold text-white uppercase tracking-wide">AI Spending Highlight</p>
+                     <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                       Your top expense this month is <strong className="text-emerald-400">{categoryEntries[0].name}</strong>, accounting for <strong className="text-emerald-400">{categoryEntries[0].percentage}%</strong> of your total categorized spending.
                      </p>
                    </div>
                 </div>
@@ -234,27 +270,37 @@ export default function DashboardPage() {
         </div>
 
         {/* Right Column - Trackers & Insights (1/3 width) */}
-        <div className="space-y-6">
+        <div className="space-y-8">
           
-          <motion.div initial={{ opacity: 0, x: 15 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.7 }}>
-            <Card className="glass-card p-6">
-              <h3 className="text-lg font-display font-semibold mb-4 flex items-center gap-2">
-                <Target className="h-5 w-5 text-primary" /> Goal Progress
+          <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.7 }}>
+            <Card className="glass-card-charcoal p-8 rounded-[32px] border-white/[0.05]">
+              <h3 className="text-xl font-bold mb-6 flex items-center gap-3 text-white uppercase tracking-tight">
+                <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                  <Target className="h-4 w-4 text-[#10B981]" />
+                </div> 
+                Goal Progress
               </h3>
               {goals.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-4">No active goals found.</p>
+                <p className="text-xs text-slate-500 font-bold uppercase tracking-widest text-center py-8">No active goals</p>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {goals.slice(0,3).map(g => {
                     const pct = Math.min(100, Math.round((g.currentAmount / g.targetAmount) * 100));
                     return (
-                      <div key={g.id}>
-                        <div className="flex justify-between items-end mb-1">
-                          <span className="text-sm font-medium flex items-center gap-2">{g.icon} {g.title}</span>
-                          <span className="text-xs text-muted-foreground">{pct}%</span>
+                      <div key={g.id} className="group">
+                        <div className="flex justify-between items-end mb-2">
+                          <span className="text-sm font-bold text-slate-300 group-hover:text-emerald-400 transition-colors flex items-center gap-3">
+                            <span className="text-lg">{g.icon}</span> {g.title}
+                          </span>
+                          <span className="text-xs font-black text-[#10B981]">{pct}%</span>
                         </div>
-                        <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                          <div className={`h-full ${pct >= 100 ? 'bg-success' : 'bg-primary'}`} style={{ width: `${pct}%` }} />
+                        <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden border border-white/[0.03]">
+                          <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${pct}%` }}
+                            transition={{ duration: 1, delay: 0.8 }}
+                            className={`h-full ${pct >= 100 ? 'bg-emerald-400 neon-strip-emerald' : 'bg-[#10B981]'}`} 
+                          />
                         </div>
                       </div>
                     )
@@ -264,26 +310,36 @@ export default function DashboardPage() {
             </Card>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, x: 15 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.8 }}>
-            <Card className="glass-card p-6">
-              <h3 className="text-lg font-display font-semibold mb-4 flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-warning" /> Budget Usage
+          <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.8 }}>
+            <Card className="glass-card-charcoal p-8 rounded-[32px] border-white/[0.05]">
+              <h3 className="text-xl font-bold mb-6 flex items-center gap-3 text-white uppercase tracking-tight">
+                <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                  <AlertTriangle className="h-4 w-4 text-[#10B981]" />
+                </div>
+                Budget Usage
               </h3>
               {budgets.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-4">No active budgets found.</p>
+                <p className="text-xs text-slate-500 font-bold uppercase tracking-widest text-center py-8">No active budgets</p>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {budgets.slice(0,3).map(b => {
                     const pct = Math.min(100, Math.round((b.spentAmount / b.budgetAmount) * 100));
                     const isOver = pct >= 90;
                     return (
-                      <div key={b.id}>
-                        <div className="flex justify-between items-end mb-1">
-                          <span className="text-sm font-medium flex items-center gap-2">{b.icon} {b.category}</span>
-                          <span className="text-xs text-muted-foreground">₹{safeToLocaleString(b.spentAmount)} / {safeToLocaleString(b.budgetAmount)}</span>
+                      <div key={b.id} className="group">
+                        <div className="flex justify-between items-end mb-2">
+                          <span className="text-sm font-bold text-slate-300 group-hover:text-emerald-400 transition-colors flex items-center gap-3">
+                            <span className="text-lg">{b.icon}</span> {b.category}
+                          </span>
+                          <span className={`text-xs font-black ${isOver ? 'text-red-400' : 'text-slate-500'}`}>₹{safeToLocaleString(b.spentAmount)}</span>
                         </div>
-                        <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                          <div className={`h-full ${isOver ? 'bg-destructive' : 'bg-success'}`} style={{ width: `${pct}%` }} />
+                        <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden border border-white/[0.03]">
+                          <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${pct}%` }}
+                            transition={{ duration: 1, delay: 1 }}
+                            className={`h-full ${isOver ? 'bg-red-400 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'bg-[#10B981]'}`} 
+                          />
                         </div>
                       </div>
                     )
@@ -294,26 +350,32 @@ export default function DashboardPage() {
           </motion.div>
 
           {/* AI Insights specific card overlay */}
-          <motion.div initial={{ opacity: 0, x: 15 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.9 }}>
-            <Card className="glass-card p-6 bg-gradient-to-br from-primary/5 to-transparent border-primary/10">
-              <h3 className="text-lg font-display font-semibold mb-4 flex items-center gap-2">
-                <Brain className="h-5 w-5 text-primary" /> AI Insights
+          <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.9 }}>
+            <Card className="glass-card-charcoal p-8 rounded-[32px] border-white/[0.05] relative overflow-hidden">
+               <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-3xl -mr-16 -mt-16" />
+              <h3 className="text-xl font-bold mb-6 flex items-center gap-3 text-white uppercase tracking-tight relative z-10">
+                <div className="h-8 w-8 rounded-lg bg-emerald-500/20 flex items-center justify-center relative">
+                   <div className="absolute inset-0 pulse-glow-emerald opacity-50 rounded-lg" />
+                   <Brain className="h-4 w-4 text-[#10B981] relative z-10" />
+                </div>
+                AI Smart Insights
               </h3>
               {insights.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-4 relative z-10">
                   {insights.slice(0,4).map((insight, idx) => (
-                    <div key={idx} className="flex gap-3 text-sm border-b border-border/50 pb-2 last:border-0 last:pb-0">
-                      {getInsightIcon(insight)}
-                      <span className="text-muted-foreground leading-relaxed">{insight}</span>
+                    <div key={idx} className="flex gap-4 text-sm border-b border-white/[0.03] pb-4 last:border-0 last:pb-0 group/insight transition-all">
+                      <div className="pt-0.5 group-hover/insight:scale-110 transition-transform">
+                        {getInsightIcon(insight)}
+                      </div>
+                      <span className="text-slate-400 group-hover:text-white transition-colors leading-relaxed font-medium italic">"{insight}"</span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-muted-foreground text-center py-4">More transactions needed for AI to generate intelligent recommendations.</p>
+                <p className="text-xs text-slate-500 font-bold uppercase tracking-widest text-center py-8 relative z-10">Collecting intelligence...</p>
               )}
             </Card>
           </motion.div>
-
         </div>
       </div>
 
@@ -325,3 +387,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

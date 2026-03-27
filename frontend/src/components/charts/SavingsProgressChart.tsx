@@ -1,8 +1,29 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from "recharts";
 
 interface Props {
   data: { month: string; savings: number }[];
 }
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const entry = payload[0];
+    const isPositive = entry.value >= 0;
+    const color = isPositive ? "hsl(var(--primary))" : "hsl(var(--destructive))";
+    
+    return (
+      <div className="bg-card/90 backdrop-blur-md border border-border/50 rounded-xl p-4 shadow-xl">
+        <p className="font-bold text-sm mb-2 px-1 text-center text-muted-foreground">{label}</p>
+        <div className="flex justify-between items-center gap-4 text-sm bg-muted/30 px-3 py-2 rounded-lg border border-border/40">
+          <span className="font-medium">Net Savings</span>
+          <span className="font-bold font-display text-lg" style={{ color }}>
+            {isPositive ? '+' : ''}₹{entry.value.toLocaleString("en-IN")}
+          </span>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
 
 export function SavingsProgressChart({ data }: Props) {
   const yAxisFormatter = (value: number) => {
@@ -13,32 +34,27 @@ export function SavingsProgressChart({ data }: Props) {
   };
 
   return (
-    <ResponsiveContainer width="100%" height={240}>
+    <ResponsiveContainer width="100%" height={260}>
       <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 13% 91%)" vertical={false} />
+        <CartesianGrid strokeDasharray="4 4" stroke="hsl(var(--border))" opacity={0.4} vertical={false} />
         <XAxis 
           dataKey="month" 
-          tick={{ fontSize: 12 }} 
-          stroke="hsl(220 9% 46%)" 
-          tickMargin={10} 
+          tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} 
+          tickMargin={12} 
           axisLine={false} 
           tickLine={false} 
         />
         <YAxis 
-          tick={{ fontSize: 12 }} 
-          stroke="hsl(220 9% 46%)" 
+          tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} 
           tickFormatter={yAxisFormatter} 
           axisLine={false} 
-          tickLine={false} 
+          tickLine={false}
+          width={50}
         />
-        <Tooltip
-          cursor={{ fill: "hsl(220 13% 91%)", opacity: 0.4 }}
-          contentStyle={{ borderRadius: 12, border: "1px solid hsl(220 13% 91%)", fontSize: 13, boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}
-          formatter={(value: number) => [`₹${value.toLocaleString("en-IN")}`, "Net Balance"]}
-        />
-        <Bar dataKey="savings" radius={[4, 4, 4, 4]}>
+        <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.3 }} />
+        <Bar dataKey="savings" radius={[6, 6, 6, 6]}>
           {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={entry.savings >= 0 ? "hsl(142 71% 45%)" : "hsl(0 84% 60%)"} />
+            <Cell key={`cell-${index}`} fill={entry.savings >= 0 ? "hsl(var(--primary))" : "hsl(var(--destructive))"} opacity={0.8} />
           ))}
         </Bar>
       </BarChart>

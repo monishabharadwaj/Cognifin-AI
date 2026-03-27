@@ -16,12 +16,57 @@ import {
   BarChart3,
   Target,
   Brain,
+  MessageSquare,
+  ShieldAlert,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { apiClient } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthStore } from "@/stores/authStore";
 import type { Transaction } from "@/types/finance";
+
+// ─── Floating Cognifin Node — Active Intelligence visual ─────────────────────
+
+function FloatingCognifinNode() {
+  return (
+    <div className="relative flex items-center justify-center w-14 h-14 select-none shrink-0">
+      {/* Outer orbit ring */}
+      <motion.div
+        className="absolute rounded-full"
+        style={{ width: 54, height: 54, border: "1px solid rgba(16,185,129,0.3)" }}
+        animate={{ rotate: 360 }}
+        transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+      >
+        <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full"
+          style={{ background: "#10B981", boxShadow: "0 0 8px rgba(16,185,129,0.9)" }} />
+      </motion.div>
+      {/* Purple counter-ring */}
+      <motion.div
+        className="absolute rounded-full"
+        style={{ width: 40, height: 40, border: "1px dashed rgba(139,92,246,0.3)" }}
+        animate={{ rotate: -360 }}
+        transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+      >
+        <div className="absolute top-1/2 -right-1 -translate-y-1/2 w-1.5 h-1.5 rounded-full"
+          style={{ background: "#8B5CF6", boxShadow: "0 0 6px rgba(139,92,246,0.9)" }} />
+      </motion.div>
+      {/* Core */}
+      <motion.div
+        className="absolute z-10 flex items-center justify-center w-9 h-9 rounded-full"
+        style={{
+          background: "linear-gradient(135deg, rgba(16,185,129,0.2), rgba(139,92,246,0.2))",
+          backdropFilter: "blur(8px)",
+          border: "1px solid rgba(255,255,255,0.1)",
+          boxShadow: "0 0 20px rgba(16,185,129,0.2), 0 0 20px rgba(139,92,246,0.15)",
+        }}
+        animate={{ scale: [1, 1.06, 1] }}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <Brain className="h-4 w-4" style={{ color: "#10B981" }} />
+      </motion.div>
+    </div>
+  );
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -68,38 +113,19 @@ const QUICK_PROMPTS = [
   },
   {
     icon: Target,
-    accent: "red",
+    accent: "destructive",
     label: "Reduce Expenses",
     text: "Give me 5 specific and actionable tips to reduce my monthly expenses right now.",
   },
 ];
 
-const ACCENT_STYLES: Record<
-  string,
-  { bg: string; text: string; border: string }
-> = {
-  blue: { bg: "bg-blue-50", text: "text-blue-600", border: "border-blue-200" },
-  green: {
-    bg: "bg-green-50",
-    text: "text-green-600",
-    border: "border-green-200",
-  },
-  yellow: {
-    bg: "bg-yellow-50",
-    text: "text-yellow-600",
-    border: "border-yellow-200",
-  },
-  purple: {
-    bg: "bg-purple-50",
-    text: "text-purple-600",
-    border: "border-purple-200",
-  },
-  orange: {
-    bg: "bg-orange-50",
-    text: "text-orange-600",
-    border: "border-orange-200",
-  },
-  red: { bg: "bg-red-50", text: "text-red-600", border: "border-red-200" },
+const ACCENT_STYLES: Record<string, { bg: string; text: string; border: string }> = {
+  blue: { bg: "bg-blue-500/10", text: "text-blue-500", border: "border-blue-500/20" },
+  green: { bg: "bg-success/10", text: "text-success", border: "border-success/20" },
+  yellow: { bg: "bg-warning/10", text: "text-warning", border: "border-warning/20" },
+  purple: { bg: "bg-purple-500/10", text: "text-purple-500", border: "border-purple-500/20" },
+  orange: { bg: "bg-orange-500/10", text: "text-orange-500", border: "border-orange-500/20" },
+  destructive: { bg: "bg-destructive/10", text: "text-destructive", border: "border-destructive/20" },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -116,7 +142,7 @@ function renderMarkdown(content: string) {
     const segments = line.split(/(\*\*[^*]+\*\*)/g);
     const nodes = segments.map((seg, segIdx) => {
       if (seg.startsWith("**") && seg.endsWith("**")) {
-        return <strong key={segIdx}>{seg.slice(2, -2)}</strong>;
+        return <strong key={segIdx} className="font-bold text-foreground">{seg.slice(2, -2)}</strong>;
       }
       return <span key={segIdx}>{seg}</span>;
     });
@@ -129,9 +155,6 @@ function renderMarkdown(content: string) {
   });
 }
 
-/**
- * Extracts the text response from whatever shape the ML service returns.
- */
 function extractResponse(raw: unknown): string {
   if (typeof raw === "string") return raw.trim();
   if (!raw || typeof raw !== "object") return "";
@@ -145,10 +168,6 @@ function extractResponse(raw: unknown): string {
   return text.trim();
 }
 
-/**
- * Converts a Transaction array into the plain-dict shape the ML
- * service expects: { amount, category, date, description, type }
- */
 function toMLTransactions(txs: Transaction[]): Record<string, unknown>[] {
   return txs.map((t) => ({
     amount: Number(t.amount) || 0,
@@ -166,42 +185,43 @@ function MessageBubble({ msg }: { msg: Message }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10, scale: 0.98 }}
+      initial={{ opacity: 0, y: 15, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.22 }}
-      className={`flex gap-2.5 ${isUser ? "flex-row-reverse" : "flex-row"}`}
+      transition={{ duration: 0.3, type: "spring", bounce: 0.4 }}
+      className={`flex gap-3 ${isUser ? "flex-row-reverse" : "flex-row"} w-full group`}
     >
       {/* Avatar */}
       <div
-        className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm ${
-          isUser ? "bg-blue-600" : "bg-slate-800"
+        className={`h-10 w-10 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-md transition-transform group-hover:scale-105 ${
+          isUser ? "bg-gradient-to-br from-primary to-primary/80" : "bg-gradient-to-br from-indigo-500 to-purple-600"
         }`}
       >
         {isUser ? (
-          <User className="h-4 w-4 text-white" />
+          <User className="h-5 w-5 text-primary-foreground" />
         ) : (
-          <Bot className="h-4 w-4 text-white" />
+          <Brain className="h-5 w-5 text-white" />
         )}
       </div>
 
       {/* Bubble + timestamp */}
-      <div
-        className={`flex flex-col gap-1 max-w-[78%] ${
-          isUser ? "items-end" : "items-start"
-        }`}
-      >
+      <div className={`flex flex-col gap-1.5 max-w-[85%] md:max-w-[75%] ${isUser ? "items-end" : "items-start"}`}>
         <div
-          className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+          className={`px-5 py-3.5 text-[15px] leading-relaxed relative overflow-hidden ${
             isUser
-              ? "bg-blue-600 text-white rounded-tr-sm"
+              ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-sm shadow-md"
               : msg.isError
-                ? "bg-red-50 text-red-700 border border-red-200 rounded-tl-sm"
-                : "bg-white text-foreground border border-border rounded-tl-sm shadow-sm"
+                ? "bg-destructive/10 text-destructive border border-destructive/20 rounded-2xl rounded-tl-sm"
+                : "bg-card text-card-foreground border border-border/50 rounded-2xl rounded-tl-sm shadow-sm"
           }`}
         >
-          {renderMarkdown(msg.content)}
+          {/* Subtle gradient overlay for user message */}
+          {isUser && <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />}
+          
+          <div className="relative z-10 text-opacity-90">
+            {renderMarkdown(msg.content)}
+          </div>
         </div>
-        <span className="text-[10px] text-muted-foreground px-1">
+        <span className="text-[11px] text-muted-foreground px-1.5 font-medium opacity-70 group-hover:opacity-100 transition-opacity">
           {formatTime(msg.timestamp)}
         </span>
       </div>
@@ -212,22 +232,23 @@ function MessageBubble({ msg }: { msg: Message }) {
 function TypingIndicator() {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0 }}
-      className="flex gap-2.5"
+      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9, filter: "blur(4px)" }}
+      transition={{ duration: 0.2 }}
+      className="flex gap-3"
     >
-      <div className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center flex-shrink-0">
-        <Bot className="h-4 w-4 text-white" />
+      <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-md">
+        <Brain className="h-5 w-5 text-white" />
       </div>
-      <div className="bg-white border border-border rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
-        <div className="flex gap-1 items-center h-5">
-          {[0, 0.18, 0.36].map((delay, i) => (
+      <div className="bg-card border border-border/50 rounded-2xl rounded-tl-sm px-5 py-4 shadow-sm flex items-center justify-center min-w-[80px]">
+        <div className="flex gap-1.5 items-center h-4">
+          {[0, 0.15, 0.3].map((delay, i) => (
             <motion.div
               key={i}
-              className="h-2 w-2 rounded-full bg-slate-400"
-              animate={{ y: [0, -6, 0] }}
-              transition={{ repeat: Infinity, duration: 0.65, delay }}
+              className="h-2 w-2 rounded-full bg-primary"
+              animate={{ y: [0, -6, 0], opacity: [0.3, 1, 0.3] }}
+              transition={{ repeat: Infinity, duration: 0.8, delay, ease: "easeInOut" }}
             />
           ))}
         </div>
@@ -242,9 +263,9 @@ const WELCOME: Message = {
   id: "welcome",
   role: "assistant",
   content:
-    "Hi! 👋 Welcome to Financial Insights.\n\n" +
-    "I connect directly to your real transaction data to give personalised recommendations on spending, savings, budgeting, and investments.\n\n" +
-    "Pick a quick question below or type your own — I'm here to help!",
+    "Hello! 👋 I'm your Cognifin Intelligence Advisor.\n\n" +
+    "I've connected to your real-time transaction data and can provide deeply personalised insights on your spending habits, budgeting strategies, and investment opportunities.\n\n" +
+    "Select a topic below or ask me anything to get started.",
   timestamp: new Date(),
 };
 
@@ -259,8 +280,6 @@ export default function AdvisorPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  // Fetch the user's real transactions once on mount so we can
-  // pass them to the ML service with every chat request.
   useEffect(() => {
     apiClient
       .getTransactions()
@@ -268,14 +287,17 @@ export default function AdvisorPage() {
         if (Array.isArray(txs)) setTransactions(txs);
       })
       .catch(() => {
-        // Non-fatal — chat still works, ML just gets an empty list
         console.warn("[AdvisorPage] Could not pre-load transactions.");
       });
   }, []);
 
-  // Auto-scroll whenever messages or typing state changes
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (bottomRef.current) {
+      // Small delay to ensure layout shifts have occurred
+      setTimeout(() => {
+        bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+      }, 50);
+    }
   }, [messages, isLoading]);
 
   const sendMessage = useCallback(
@@ -299,7 +321,6 @@ export default function AdvisorPage() {
       let responseText = "";
       let mlSuccess = false;
 
-      // ── Step 1: ensure we have transactions loaded ──────────────────────────
       let txList = transactions;
       if (txList.length === 0) {
         try {
@@ -308,52 +329,38 @@ export default function AdvisorPage() {
             txList = fetched;
             setTransactions(fetched);
           }
-        } catch {
-          // non-fatal — ML backend will also fetch from DB
-        }
+        } catch { }
       }
 
       const mlPayload = toMLTransactions(txList);
 
-      // ── Step 2: try FastAPI ML service via Vite /ml proxy ──────────────────
-      // POST /ml/financial_chat → http://127.0.0.1:8000/financial_chat
-      // Pydantic: { question: str, transactions: list }
       try {
         const mlResult = await apiClient.financialChatML(trimmed, mlPayload);
         responseText = extractResponse(mlResult);
         if (responseText) mlSuccess = true;
       } catch (mlErr: unknown) {
-        console.error(
-          "[Advisor] ML /financial_chat failed:",
-          mlErr instanceof Error ? mlErr.message : mlErr,
-        );
+        console.error("[Advisor] ML /financial_chat failed:", mlErr);
       }
 
-      // ── Step 3: fallback — Node.js backend /api/ai/chat ────────────────────
-      // The backend now auto-fetches the user's transactions from DB.
       if (!mlSuccess) {
         try {
           const apiResult = await apiClient.chatWithAI(trimmed);
           const extracted = extractResponse(apiResult);
           if (extracted) responseText = extracted;
         } catch (apiErr: unknown) {
-          console.error(
-            "[Advisor] Backend /ai/chat failed:",
-            apiErr instanceof Error ? apiErr.message : apiErr,
-          );
+          console.error("[Advisor] Backend /ai/chat failed:", apiErr);
         }
       }
 
-      // ── Step 4: final fallback message ─────────────────────────────────────
       if (!responseText) {
         const noTx = mlPayload.length === 0;
         responseText =
           (noTx
-            ? "⚠️ No transactions found in your account yet.\n\nPlease add some transactions first so I can analyse your finances.\n\n"
+            ? "⚠️ No transactions found in your account yet.\n\nPlease log some transactions first so I have data to analyse.\n\n"
             : "") +
-          "I couldn't reach the AI service right now. Please make sure:\n" +
-          "• Backend is running on **port 5000**\n" +
-          "• ML service is running on **port 8000**\n\n" +
+          "I couldn't reach the intelligence engine right now. Please ensure:\n" +
+          "• Core backend is running (Port 5000)\n" +
+          "• ML engine is active (Port 8000)\n\n" +
           "Then try your question again.";
       }
 
@@ -371,7 +378,6 @@ export default function AdvisorPage() {
       setIsLoading(false);
       setTimeout(() => inputRef.current?.focus(), 50);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [isLoading, transactions],
   );
 
@@ -390,7 +396,7 @@ export default function AdvisorPage() {
       {
         ...WELCOME,
         id: `welcome-${Date.now()}`,
-        content: "Chat cleared! 🔄 How can I help with your finances today?",
+        content: "Chat cleared! 🔄 How can I assist you with your financial goals today?",
         timestamp: new Date(),
       },
     ]);
@@ -399,249 +405,211 @@ export default function AdvisorPage() {
     setTimeout(() => inputRef.current?.focus(), 50);
   };
 
-  const displayName = user?.name ?? "there";
+  const displayName = user?.name?.split(' ')[0] ?? "there";
 
   return (
-    <div className="flex flex-col gap-4 h-full">
-      {/* ── Page header ───────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-slate-900 flex items-center justify-center shadow-sm">
-            <Brain className="h-5 w-5 text-white" />
-          </div>
+    <div className="flex flex-col gap-6 h-full pb-6">
+      {/* ── Page Header ───────────────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl p-5 shadow-sm relative overflow-hidden" style={{ background: "rgba(13,20,28,0.8)", border: "1px solid rgba(16,185,129,0.15)", backdropFilter: "blur(12px)" }}>
+        {/* Ambient glow */}
+        <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 10% 50%, rgba(16,185,129,0.06) 0%, transparent 60%)" }} />
+        <div className="flex items-center gap-4 relative z-10">
+          {/* Floating Cognifin Node */}
+          <FloatingCognifinNode />
           <div>
-            <h1 className="text-xl font-display font-bold leading-tight">
-              Financial Insights
+            <h1 className="text-2xl font-display font-bold tracking-tight text-white">
+              Cognifin Advisor
             </h1>
-            <p className="text-xs text-muted-foreground">
-              Smart analysis · Real data · Personalised recommendations
+            <p className="text-sm mt-1 flex items-center gap-1.5 font-medium" style={{ color: "rgba(255,255,255,0.45)" }}>
+              <Sparkles className="h-3.5 w-3.5" style={{ color: "#10B981" }} /> Active Intelligence · Powered by your real financial data
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Online indicator */}
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-50 border border-green-200">
-            <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-xs text-green-700 font-medium">
-              {isLoading ? "Thinking…" : "Online"}
+        <div className="flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-success/10 border border-success/20">
+            <span className="relative flex h-2 w-2">
+              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full bg-success ${isLoading ? 'opacity-100' : 'opacity-75'}`}></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
+            </span>
+            <span className="text-xs text-success font-bold tracking-wide uppercase">
+              {isLoading ? "Processing" : "Online"}
             </span>
           </div>
-
-          <Button variant="outline" size="sm" onClick={clearChat}>
-            <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+          <Button variant="outline" size="sm" onClick={clearChat} className="rounded-full shadow-sm">
+            <RefreshCw className="h-4 w-4 mr-2" />
             New Chat
           </Button>
         </div>
       </div>
 
-      {/* ── Main layout: chat + sidebar ───────────────────────────────────── */}
-      <div
-        className="flex flex-1 gap-4 min-h-0"
-        style={{ height: "calc(100vh - 11rem)" }}
-      >
-        {/* ── Chat panel ─────────────────────────────────────────────────── */}
-        <Card className="flex-1 flex flex-col min-h-0 overflow-hidden border-0 shadow-md">
-          {/* Chat top bar */}
-          <div className="flex items-center gap-3 px-4 py-3 bg-slate-900 rounded-t-xl flex-shrink-0">
-            <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-              <Bot className="h-4 w-4 text-white" />
-            </div>
+      {/* ── Main Workspace ────────────────────────────────────────────────── */}
+      <div className="flex flex-1 gap-6 min-h-0" style={{ height: "calc(100vh - 15rem)" }}>
+        
+        {/* ── Chat Canvas ─────────────────────────────────────────────────── */}
+        <Card className="flex-1 flex flex-col min-h-0 overflow-hidden border border-border/50 shadow-sm rounded-2xl bg-card">
+          {/* Chat Header */}
+          <div className="flex items-center gap-3 px-6 py-4 border-b border-border/50 bg-muted/30 backdrop-blur-md z-10">
+            <div className="h-4 w-4 rounded-full bg-success shadow-[0_0_10px_rgba(34,197,94,0.4)]" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white">
-                Financial Insights
-              </p>
-              <p className="text-[11px] text-slate-400">
-                Chatting as {displayName}
-              </p>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
-              <span className="text-xs text-slate-300">
-                {isLoading ? "Thinking…" : "Ready"}
-              </span>
+              <p className="text-sm font-bold text-foreground">Secure Session Active</p>
+              <p className="text-xs text-muted-foreground font-medium">End-to-end encrypted for {displayName}</p>
             </div>
           </div>
 
-          {/* Messages area */}
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 bg-slate-50">
-            <AnimatePresence initial={false}>
-              {messages.map((msg) => (
-                <MessageBubble key={msg.id} msg={msg} />
-              ))}
+          {/* Messages Area */}
+          <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-6 scroll-smooth bg-gradient-to-b from-card to-muted/20">
+            <div className="flex flex-col justify-end min-h-full space-y-6">
+              <AnimatePresence initial={false}>
+                {messages.map((msg) => (
+                  <MessageBubble key={msg.id} msg={msg} />
+                ))}
 
-              {isLoading && <TypingIndicator key="typing" />}
-            </AnimatePresence>
+                {isLoading && <TypingIndicator key="typing" />}
+              </AnimatePresence>
 
-            {/* Quick prompts (shown until user sends first message) */}
-            <AnimatePresence>
-              {showPrompts && !isLoading && messages.length <= 1 && (
-                <motion.div
-                  key="quick-prompts"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  className="pt-2"
-                >
-                  <p className="text-xs text-muted-foreground font-medium mb-3 text-center uppercase tracking-wide">
-                    Quick questions to get started
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {QUICK_PROMPTS.map(
-                      ({ icon: Icon, accent, label, text }) => {
+              {/* Quick Prompts Grid */}
+              <AnimatePresence>
+                {showPrompts && !isLoading && messages.length <= 1 && (
+                  <motion.div
+                    key="quick-prompts"
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, filter: "blur(5px)" }}
+                    transition={{ duration: 0.3 }}
+                    className="pt-6 pb-2"
+                  >
+                    <div className="flex items-center gap-4 mb-5">
+                      <div className="h-px bg-border flex-1" />
+                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-2">
+                        Suggested Queries
+                      </p>
+                      <div className="h-px bg-border flex-1" />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {QUICK_PROMPTS.map(({ icon: Icon, accent, label, text }, idx) => {
                         const style = ACCENT_STYLES[accent];
                         return (
-                          <button
+                          <motion.button
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: idx * 0.05 + 0.2 }}
                             key={label}
                             onClick={() => sendMessage(text)}
                             disabled={isLoading}
-                            className={`flex items-center gap-3 p-3 rounded-xl text-left border transition-all hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed bg-white hover:bg-muted/30 ${style.border}`}
+                            className={`flex flex-col px-4 py-4 rounded-xl text-left border bg-card hover:bg-muted/50 transition-all ${style.border} hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed group relative overflow-hidden`}
                           >
-                            <div
-                              className={`h-8 w-8 rounded-lg ${style.bg} flex items-center justify-center flex-shrink-0`}
-                            >
-                              <Icon className={`h-4 w-4 ${style.text}`} />
+                            <div className={`absolute top-0 right-0 w-16 h-16 rounded-full blur-2xl opacity-20 transition-opacity group-hover:opacity-40 -mr-8 -mt-8 ${style.bg.replace('/10', '')}`} />
+                            <div className={`h-10 w-10 rounded-xl ${style.bg} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
+                              <Icon className={`h-5 w-5 ${style.text}`} />
                             </div>
-                            <span className="text-sm font-medium leading-snug">
-                              {label}
+                            <span className="text-[15px] font-bold text-foreground mb-1 z-10">{label}</span>
+                            <span className="text-[11px] text-muted-foreground line-clamp-2 z-10 leading-relaxed font-medium">
+                              {text}
                             </span>
-                          </button>
+                          </motion.button>
                         );
-                      },
-                    )}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                      })}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-            <div ref={bottomRef} />
+              {/* Empty div for auto-scrolling to bottom rigidly */}
+              <div ref={bottomRef} className="h-2" />
+            </div>
           </div>
 
-          {/* Input bar */}
-          <div className="flex gap-2 p-3 border-t bg-white flex-shrink-0">
-            <Input
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask about your finances… (Enter to send)"
-              disabled={isLoading}
-              className="flex-1 bg-slate-50 border-slate-200 focus-visible:ring-1 focus-visible:ring-blue-500"
-            />
-            <Button
-              onClick={() => sendMessage(input)}
-              disabled={!input.trim() || isLoading}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 flex-shrink-0 shadow-sm"
-            >
-              {isLoading ? (
-                <RefreshCw className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-            </Button>
+          {/* Input Area */}
+          <div className="p-4 bg-card border-t border-border/50 z-10">
+            <div className="relative flex items-center bg-muted/40 border border-border rounded-full shadow-inner focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all p-1">
+              <div className="pl-4 text-muted-foreground">
+                <MessageSquare className="h-5 w-5" />
+              </div>
+              <Input
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={`Message Cognifin Advisor as ${displayName}...`}
+                disabled={isLoading}
+                className="flex-1 bg-transparent border-0 shadow-none focus-visible:ring-0 px-4 text-[15px] placeholder:text-muted-foreground h-12"
+              />
+              <Button
+                onClick={() => sendMessage(input)}
+                disabled={!input.trim() || isLoading}
+                className="rounded-full w-12 h-12 p-0 shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md mr-1 transition-transform active:scale-95 disabled:opacity-50"
+              >
+                {isLoading ? (
+                  <RefreshCw className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Send className="h-5 w-5" />
+                )}
+              </Button>
+            </div>
+            <div className="text-center mt-3">
+              <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/70">
+                Cognifin AI may produce inaccurate information about people, places, or facts.
+              </p>
+            </div>
           </div>
         </Card>
 
-        {/* ── Right sidebar ──────────────────────────────────────────────── */}
-        <div className="hidden lg:flex flex-col gap-3 w-60 flex-shrink-0">
-          {/* Quick prompts sidebar (desktop) */}
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Zap className="h-3.5 w-3.5 text-yellow-500" />
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Quick Prompts
-              </h3>
+        {/* ── Helper Sidebar (Desktop Only) ──────────────────────────────── */}
+        <div className="hidden xl:flex flex-col gap-4 w-72 shrink-0">
+          <Card className="p-5 border border-border/50 shadow-sm bg-gradient-to-br from-indigo-500/5 to-purple-500/5 backdrop-blur-sm rounded-2xl relative overflow-hidden">
+            <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 rounded-full blur-3xl"></div>
+            <div className="flex items-center gap-2 mb-4 relative z-10">
+              <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-500">
+                <Lightbulb className="h-4 w-4" />
+              </div>
+              <h3 className="text-sm font-bold text-foreground">Pro Tips</h3>
             </div>
-            <div className="space-y-1.5">
-              {QUICK_PROMPTS.map(({ icon: Icon, accent, label, text }) => {
-                const style = ACCENT_STYLES[accent];
-                return (
-                  <button
-                    key={label}
-                    onClick={() => sendMessage(text)}
-                    disabled={isLoading}
-                    className="w-full flex items-center gap-2.5 p-2 rounded-lg text-left text-sm hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed group"
-                  >
-                    <div
-                      className={`h-6 w-6 rounded-md ${style.bg} flex items-center justify-center flex-shrink-0`}
-                    >
-                      <Icon className={`h-3.5 w-3.5 ${style.text}`} />
-                    </div>
-                    <span className="text-xs font-medium leading-snug group-hover:text-foreground transition-colors">
-                      {label}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </Card>
-
-          {/* Tips card */}
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Lightbulb className="h-3.5 w-3.5 text-blue-500" />
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                How to Use
-              </h3>
-            </div>
-            <ul className="space-y-2">
+            <ul className="space-y-3 relative z-10">
               {[
-                {
-                  icon: "⌨️",
-                  tip: (
-                    <>
-                      Press{" "}
-                      <kbd className="bg-muted px-1.5 py-0.5 rounded text-[10px] font-mono border">
-                        Enter
-                      </kbd>{" "}
-                      to send
-                    </>
-                  ),
-                },
-                { icon: "📊", tip: "Ask about specific spending categories" },
-                { icon: "📅", tip: "Request monthly or weekly comparisons" },
-                { icon: "🎯", tip: "Ask for a personalised savings plan" },
-                { icon: "💡", tip: "Insights use your real transaction data" },
-                { icon: "🔒", tip: "Bank-level secure and private" },
-              ].map(({ icon, tip }, i) => (
-                <li
-                  key={i}
-                  className="flex items-start gap-2 text-xs text-muted-foreground"
-                >
-                  <span className="flex-shrink-0 mt-0.5">{icon}</span>
-                  <span className="leading-snug">{tip}</span>
+                { icon: "⌨️", text: "Press Enter to send a message instantly." },
+                { icon: "📈", text: "Ask for predictions based on previous spending." },
+                { icon: "💡", text: "Inquire about tax-saving investment strategies." },
+                { icon: "🔍", text: "Search through specific transaction histories." },
+              ].map((item, i) => (
+                <li key={i} className="flex gap-3 text-sm text-muted-foreground items-start">
+                  <span className="text-base leading-none mt-0.5">{item.icon}</span>
+                  <span className="leading-snug font-medium">{item.text}</span>
                 </li>
               ))}
             </ul>
           </Card>
 
-          {/* Connection status */}
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Zap className="h-3.5 w-3.5 text-green-500" />
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Services
-              </h3>
+          <Card className="p-5 border border-border/50 shadow-sm bg-card rounded-2xl flex-1">
+             <div className="flex items-center gap-2 mb-4">
+              <div className="p-1.5 rounded-lg bg-green-500/10 text-green-500">
+                <Zap className="h-4 w-4" />
+              </div>
+              <h3 className="text-sm font-bold text-foreground">System Status</h3>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {[
-                { label: "Backend API", port: "5000", ok: true },
-                { label: "ML Engine", port: "8000", ok: true },
-              ].map(({ label, port, ok }) => (
-                <div key={label} className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <span
-                      className={`h-1.5 w-1.5 rounded-full ${ok ? "bg-green-500" : "bg-red-500"}`}
-                    />
-                    <span className="text-xs text-muted-foreground">
-                      {label}
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-muted-foreground font-mono">
-                    :{port}
-                  </span>
+                { name: "Core Backend", status: "Active", dot: "bg-success" },
+                { name: "ML Risk Engine", status: "Active", dot: "bg-success" },
+                { name: "Encryption Key", status: "Valid", dot: "bg-success" },
+              ].map((sys) => (
+                <div key={sys.name} className="flex items-center justify-between p-2 rounded-lg bg-muted/40 border border-border/50">
+                   <div className="flex items-center gap-2">
+                     <div className={`h-2 w-2 rounded-full ${sys.dot}`}></div>
+                     <span className="text-xs font-semibold text-foreground">{sys.name}</span>
+                   </div>
+                   <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">{sys.status}</span>
                 </div>
               ))}
+            </div>
+            <div className="mt-auto pt-6">
+               <div className="w-full h-24 rounded-xl bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center border border-slate-700 p-4 text-center shadow-inner relative overflow-hidden group">
+                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
+                 <div className="relative z-10 flex flex-col items-center">
+                   <ShieldAlert className="h-6 w-6 text-slate-400 mb-1 group-hover:text-primary transition-colors" />
+                   <p className="text-xs text-slate-300 font-medium">Bank-Grade Encryption</p>
+                 </div>
+               </div>
             </div>
           </Card>
         </div>

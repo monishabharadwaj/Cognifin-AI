@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { apiClient } from "@/services/api";
 import { useQuery } from "@tanstack/react-query";
@@ -19,6 +19,9 @@ import {
   TrendingDown,
   PiggyBank,
   Activity,
+  Sparkles,
+  ShieldAlert,
+  BarChart,
 } from "lucide-react";
 
 // ─── Data normalisers (same logic as DashboardPage) ─────────────────────────
@@ -98,10 +101,10 @@ function deriveHealthScore(data: AIDashboardData) {
 }
 
 const HEALTH_CATS = [
-  { label: "Savings Rate", key: "savingsRate" as const, bar: "bg-green-500" },
-  { label: "Expense Ratio", key: "expenseRatio" as const, bar: "bg-red-500" },
-  { label: "Debt Management", key: "debtManagement" as const, bar: "bg-blue-500" },
-  { label: "Investment Score", key: "investmentDiversity" as const, bar: "bg-purple-500" },
+  { label: "Savings Rate", key: "savingsRate" as const, color: "text-success", bg: "bg-success/20", bar: "bg-success" },
+  { label: "Expense Ratio", key: "expenseRatio" as const, color: "text-destructive", bg: "bg-destructive/20", bar: "bg-destructive" },
+  { label: "Debt Management", key: "debtManagement" as const, color: "text-warning", bg: "bg-warning/20", bar: "bg-warning" },
+  { label: "Investment Score", key: "investmentDiversity" as const, color: "text-indigo-500", bg: "bg-indigo-500/20", bar: "bg-indigo-500" },
 ];
 
 // ─── Skeleton ────────────────────────────────────────────────────────────────
@@ -127,17 +130,17 @@ export default function AnalyticsPage() {
   // ── Loading ──────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-56" />
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="space-y-6 pb-12">
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-64 w-full" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-24" />
+            <Skeleton key={i} className="h-32" />
           ))}
         </div>
-        <Skeleton className="h-40" />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Skeleton className="h-72" />
-          <Skeleton className="h-72" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Skeleton className="h-80" />
+          <Skeleton className="h-80" />
         </div>
       </div>
     );
@@ -146,24 +149,24 @@ export default function AnalyticsPage() {
   // ── Error ────────────────────────────────────────────────────────────────
   if (error || !dashboardData) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 gap-4">
-        <Activity className="h-12 w-12 text-muted-foreground opacity-30" />
-        <p className="text-lg font-semibold">
-          {error ? "Failed to load analytics" : "No data available"}
-        </p>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center py-24 gap-4 bg-card/40 border border-dashed border-border rounded-3xl mt-6">
+        <div className="h-20 w-20 bg-muted rounded-full flex items-center justify-center">
+          <Activity className="h-10 w-10 text-muted-foreground opacity-50" />
+        </div>
+        <p className="text-xl font-display font-bold">Analytics Unavailable</p>
         <p className="text-sm text-muted-foreground text-center max-w-sm">
           {error
-            ? "Please check your connection and try again."
-            : "Start by adding some transactions to see your analytics."}
+            ? "We encountered an issue fetching your insights. Please try again."
+            : "Start by logging transactions to populate your analytics dashboard."}
         </p>
         <button
           onClick={() => refetch()}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+          className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-gradient-to-r from-primary to-purple-600 text-white text-sm font-bold shadow-md hover:shadow-lg transition-all"
         >
           <RefreshCw className="h-4 w-4" />
-          Retry
+          Retry Connection
         </button>
-      </div>
+      </motion.div>
     );
   }
 
@@ -176,7 +179,7 @@ export default function AnalyticsPage() {
   const expenses = dashboardData.summary?.total_expense ?? 0;
   const balance = dashboardData.summary?.balance ?? income - expenses;
 
-  // Flagged transactions — handle both flat and wrapped shapes
+  // Flagged transactions
   const flagged: Array<{
     description: string;
     amount: number;
@@ -200,179 +203,161 @@ export default function AnalyticsPage() {
 
   // ── Render ───────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-display font-bold">
-            Financial Analytics
-          </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            AI-powered overview of your financial health
-          </p>
+    <div className="space-y-6 pb-12">
+      {/* Premium Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 bg-card border border-border/50 rounded-2xl shadow-sm relative overflow-hidden">
+        <div className="relative z-10 flex items-center gap-4">
+          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center shadow-lg shadow-primary/20 shrink-0">
+            <BarChart className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-display font-bold tracking-tight">Financial Intelligence</h1>
+            <p className="text-sm text-muted-foreground mt-1 font-medium flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5 text-primary" /> AI-powered insights &amp; behavioral analysis
+            </p>
+          </div>
         </div>
         <button
           onClick={() => refetch()}
-          className="flex items-center gap-1.5 text-xs px-3 py-1.5 border rounded-lg hover:bg-muted transition-colors"
+          className="relative z-10 flex items-center gap-2 text-xs font-semibold px-4 py-2 bg-muted/50 border border-border/50 rounded-lg hover:bg-muted transition-colors text-foreground"
         >
           <RefreshCw className="h-3.5 w-3.5" />
-          Refresh
+          Sync Data
         </button>
       </div>
 
-      {/* Health Score */}
-      <Card className="glass-card p-6">
-        <div className="flex flex-col md:flex-row items-center gap-8">
-          {/* Circle */}
-          <div className="relative flex-shrink-0">
-            <svg className="w-36 h-36" viewBox="0 0 120 120">
-              <circle
-                cx="60"
-                cy="60"
-                r="52"
-                fill="none"
-                stroke="hsl(220 14% 96%)"
-                strokeWidth="10"
-              />
-              <motion.circle
-                cx="60"
-                cy="60"
-                r="52"
-                fill="none"
-                stroke="hsl(217 91% 60%)"
-                strokeWidth="10"
-                strokeLinecap="round"
-                strokeDasharray={`${(score.overallScore / 100) * 327} 327`}
-                transform="rotate(-90 60 60)"
-                initial={{ strokeDasharray: "0 327" }}
-                animate={{
-                  strokeDasharray: `${(score.overallScore / 100) * 327} 327`,
-                }}
-                transition={{ duration: 1.2, ease: "easeOut" }}
-              />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-3xl font-display font-bold">
-                {score.overallScore}
-              </span>
-              <span className="text-xs text-muted-foreground">/ 100</span>
+      {/* Health Score Panel */}
+      <Card className="p-0 border border-border/50 rounded-2xl overflow-hidden bg-card/80 backdrop-blur-lg">
+        <div className="flex flex-col md:flex-row items-center divide-y md:divide-y-0 md:divide-x divide-border/40">
+          
+          {/* Main Score - Left */}
+          <div className="flex flex-col items-center justify-center p-8 lg:px-12 w-full md:w-auto shrink-0 relative">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground text-center mb-6 w-full absolute top-6">FinHealth Index</h3>
+            <div className="relative flex-shrink-0 mt-8 mb-4">
+              <svg className="w-40 h-40" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="52" fill="none" stroke="currentColor" className="text-muted/30" strokeWidth="12" />
+                <motion.circle
+                  cx="60"
+                  cy="60"
+                  r="52"
+                  fill="none"
+                  stroke="url(#healthGradient)"
+                  strokeWidth="12"
+                  strokeLinecap="round"
+                  strokeDasharray={`${(score.overallScore / 100) * 327} 327`}
+                  transform="rotate(-90 60 60)"
+                  initial={{ strokeDasharray: "0 327" }}
+                  animate={{ strokeDasharray: `${(score.overallScore / 100) * 327} 327` }}
+                  transition={{ duration: 1.5, ease: "easeOut" }}
+                />
+                <defs>
+                  <linearGradient id="healthGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="hsl(var(--primary))" />
+                    <stop offset="100%" stopColor="hsl(var(--secondary-foreground))" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-5xl font-display font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-br from-primary to-purple-600">
+                  {score.overallScore}
+                </span>
+              </div>
             </div>
+            <p className="text-xs font-medium text-muted-foreground">Out of 100 points</p>
           </div>
 
-          {/* Bars */}
-          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
-            {HEALTH_CATS.map((cat, i) => (
-              <motion.div
-                key={cat.key}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.08 }}
-                className="space-y-1.5"
-              >
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{cat.label}</span>
-                  <span className="font-semibold">{score[cat.key]}%</span>
-                </div>
-                <div className="h-2 rounded-full bg-secondary overflow-hidden">
-                  <motion.div
-                    className={`h-full rounded-full ${cat.bar}`}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${score[cat.key]}%` }}
-                    transition={{ duration: 0.8, delay: i * 0.08 }}
-                  />
-                </div>
-              </motion.div>
-            ))}
+          {/* Breakdown Bars - Right */}
+          <div className="flex-1 p-6 md:p-8 w-full bg-muted/10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
+              {HEALTH_CATS.map((cat, i) => (
+                <motion.div key={cat.key} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }} className="space-y-2.5">
+                  <div className="flex justify-between text-sm items-end">
+                    <span className="font-semibold text-muted-foreground">{cat.label}</span>
+                    <span className={`font-bold text-base bg-clip-text text-transparent bg-gradient-to-r from-foreground to-muted-foreground`}>{score[cat.key]}<span className="text-xs">%</span></span>
+                  </div>
+                  <div className={`h-2.5 rounded-full ${cat.bg} overflow-hidden border border-border/20 relative`}>
+                    <motion.div
+                      className={`absolute top-0 left-0 h-full rounded-full ${cat.bar}`}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${score[cat.key]}%` }}
+                      transition={{ duration: 1, delay: 0.2 + (i * 0.1) }}
+                    />
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </div>
       </Card>
 
-      {/* Quick stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Card className="glass-card p-4">
-          <p className="text-xs text-muted-foreground mb-1">Total Income</p>
-          <p className="text-xl font-display font-bold text-green-600">
-            ₹{safeToLocaleString(income)}
-          </p>
-          <TrendingUp className="h-4 w-4 text-green-500 mt-1" />
-        </Card>
-        <Card className="glass-card p-4">
-          <p className="text-xs text-muted-foreground mb-1">Total Expenses</p>
-          <p className="text-xl font-display font-bold text-red-500">
-            ₹{safeToLocaleString(expenses)}
-          </p>
-          <TrendingDown className="h-4 w-4 text-red-500 mt-1" />
-        </Card>
-        <Card className="glass-card p-4">
-          <p className="text-xs text-muted-foreground mb-1">Net Balance</p>
-          <p
-            className={`text-xl font-display font-bold ${balance >= 0 ? "text-green-600" : "text-red-500"}`}
-          >
-            ₹{safeToLocaleString(balance)}
-          </p>
-          <PiggyBank className="h-4 w-4 text-blue-500 mt-1" />
-        </Card>
-        <Card className="glass-card p-4">
-          <p className="text-xs text-muted-foreground mb-1">Savings Rate</p>
-          <p
-            className={`text-xl font-display font-bold ${score.savingsRate >= 0 ? "text-green-600" : "text-red-500"}`}
-          >
-            {score.savingsRate}%
-          </p>
-          <Activity className="h-4 w-4 text-primary mt-1" />
-        </Card>
+      {/* Quick stats KPI grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: "Total Income", value: income, icon: TrendingUp, color: "text-success", bg: "bg-success/10", border: "border-success/20" },
+          { label: "Total Expenses", value: expenses, icon: TrendingDown, color: "text-destructive", bg: "bg-destructive/10", border: "border-destructive/20" },
+          { label: "Net Balance", value: balance, icon: PiggyBank, color: balance >= 0 ? "text-primary" : "text-destructive", bg: balance >= 0 ? "bg-primary/10" : "bg-destructive/10", border: balance >= 0 ? "border-primary/20" : "border-destructive/20" },
+          { label: "Savings Rate", value: score.savingsRate, isPercent: true, icon: Activity, color: score.savingsRate >= 0 ? "text-indigo-500" : "text-warning", bg: score.savingsRate >= 0 ? "bg-indigo-500/10" : "bg-warning/10", border: score.savingsRate >= 0 ? "border-indigo-500/20" : "border-warning/20" },
+        ].map((stat, i) => (
+          <motion.div key={stat.label} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 + 0.3 }}>
+            <Card className="p-5 border border-border/50 bg-card/60 backdrop-blur-sm rounded-2xl hover:shadow-md transition-shadow group relative overflow-hidden">
+              <div className={`absolute -right-4 -top-4 w-16 h-16 rounded-full blur-2xl opacity-40 transition-opacity group-hover:opacity-70 ${stat.bg}`} />
+              <div className="flex items-start justify-between mb-4 relative z-10">
+                <p className="text-xs font-bold tracking-wider text-muted-foreground uppercase">{stat.label}</p>
+                <div className={`p-1.5 rounded-lg border ${stat.bg} ${stat.border}`}>
+                  <stat.icon className={`h-4 w-4 ${stat.color}`} />
+                </div>
+              </div>
+              <p className={`text-2xl lg:text-3xl font-display font-bold tracking-tight mb-1 relative z-10 ${stat.color}`}>
+                {stat.isPercent ? `${stat.value}%` : `₹${safeToLocaleString(stat.value)}`}
+              </p>
+            </Card>
+          </motion.div>
+        ))}
       </div>
 
       {/* Flagged transactions */}
-      {flagged.length > 0 && (
-        <Card className="glass-card p-5">
-          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-            🔴 AI-Flagged Transactions
-            <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
-              {flagged.length}
-            </span>
-          </h3>
-          <div className="space-y-2">
-            {flagged.map((f, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between p-3 rounded-lg bg-red-50 border border-red-100"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  {f.date && (
-                    <span className="text-xs text-muted-foreground w-16 flex-shrink-0">
-                      {(() => {
-                        try {
-                          const d = new Date(f.date);
-                          return isNaN(d.getTime())
-                            ? "—"
-                            : d.toLocaleDateString("en-IN", {
-                                day: "2-digit",
-                                month: "short",
-                              });
-                        } catch {
-                          return "—";
-                        }
-                      })()}
-                    </span>
-                  )}
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">
-                      {f.description}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {f.reason}
-                    </p>
-                  </div>
-                </div>
-                <span className="text-sm font-semibold text-red-600 flex-shrink-0 ml-3">
-                  -₹{safeToLocaleString(f.amount)}
+      <AnimatePresence>
+        {flagged.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+            <Card className="p-0 border border-destructive/30 rounded-2xl overflow-hidden bg-destructive/5 shadow-sm">
+              <div className="bg-destructive/10 px-5 py-3 border-b border-destructive/20 flex items-center gap-2">
+                <ShieldAlert className="h-5 w-5 text-destructive" />
+                <h3 className="font-bold text-destructive">Risk Radar: Flagged Transactions</h3>
+                <span className="ml-auto text-xs font-bold bg-destructive text-white px-2 py-0.5 rounded-full shadow-sm">
+                  {flagged.length} Warnings
                 </span>
               </div>
-            ))}
-          </div>
-        </Card>
-      )}
+              <div className="divide-y divide-destructive/10">
+                {flagged.map((f, i) => (
+                  <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-5 hover:bg-destructive/5 transition-colors gap-4">
+                    <div className="flex items-start gap-4 min-w-0">
+                      <div className="h-10 w-10 shrink-0 rounded-xl bg-destructive/10 border border-destructive/20 flex items-center justify-center text-destructive font-bold text-xs uppercase text-center leading-tight">
+                        {(() => {
+                          try {
+                            const d = new Date(f.date);
+                            return isNaN(d.getTime()) ? "—" : `${d.getDate()}\n${d.toLocaleString('default', { month: 'short' })}`;
+                          } catch { return "—"; }
+                        })()}
+                      </div>
+                      <div className="min-w-0 pt-0.5">
+                        <p className="text-sm font-bold text-foreground truncate">{f.description}</p>
+                        <p className="text-xs font-medium text-destructive mt-0.5 max-w-sm lg:max-w-md xl:max-w-xl truncate">
+                          <span className="uppercase tracking-wider mr-1 opacity-70">Reason:</span> {f.reason}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="sm:text-right shrink-0">
+                      <span className="text-lg font-display font-bold text-destructive bg-destructive/10 px-3 py-1 rounded-lg inline-block">
+                        -₹{safeToLocaleString(f.amount)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

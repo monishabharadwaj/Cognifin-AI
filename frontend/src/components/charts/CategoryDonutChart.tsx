@@ -1,11 +1,9 @@
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from "recharts";
 import { BarChart3 } from "lucide-react";
 
 interface CategoryDataEntry {
   name: string;
-  /** Primary value field — chart uses this for sizing */
   value?: number;
-  /** Alternative to value — used by CategoryEntry from the dashboard */
   amount?: number;
   percentage?: number;
   color?: string;
@@ -43,32 +41,19 @@ function formatINR(value: number): string {
 }
 
 // Custom tooltip content
-function CustomTooltip({
-  active,
-  payload,
-}: {
-  active?: boolean;
-  payload?: any[];
-}) {
+function CustomTooltip({ active, payload }: any) {
   if (!active || !payload || payload.length === 0) return null;
 
   const entry = payload[0].payload;
   return (
-    <div
-      style={{
-        background: "hsl(var(--background))",
-        border: "1px solid hsl(var(--border))",
-        borderRadius: 10,
-        padding: "10px 14px",
-        fontSize: 13,
-        boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-      }}
-    >
-      <p style={{ fontWeight: 600, marginBottom: 4 }}>{entry.name}</p>
-      <p style={{ color: entry.color }}>{formatINR(entry.value)}</p>
-      <p style={{ color: "hsl(var(--muted-foreground))", marginTop: 2 }}>
-        {entry.percentage}% of total
-      </p>
+    <div className="bg-card/90 backdrop-blur-md border border-border/50 rounded-xl p-4 shadow-xl">
+      <p className="font-bold text-sm mb-3 px-1">{entry.name}</p>
+      <div className="flex justify-between items-center gap-6 text-sm bg-muted/30 px-3 py-2 rounded-lg border border-border/40">
+        <span className="flex flex-col">
+          <span className="font-bold font-display text-lg leading-tight" style={{ color: entry.color }}>{formatINR(entry.value)}</span>
+          <span className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">{entry.percentage}% of total</span>
+        </span>
+      </div>
     </div>
   );
 }
@@ -78,8 +63,10 @@ export function CategoryDonutChart({ data }: Props) {
   if (!data || data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <BarChart3 className="h-10 w-10 text-muted-foreground mb-3 opacity-30" />
-        <p className="text-sm font-medium text-muted-foreground">
+        <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-3">
+          <BarChart3 className="h-6 w-6 text-muted-foreground opacity-50" />
+        </div>
+        <p className="text-sm font-medium text-foreground">
           No spending data available
         </p>
         <p className="text-xs text-muted-foreground mt-1 max-w-xs">
@@ -118,8 +105,10 @@ export function CategoryDonutChart({ data }: Props) {
   if (chartData.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <BarChart3 className="h-10 w-10 text-muted-foreground mb-3 opacity-30" />
-        <p className="text-sm text-muted-foreground">
+        <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-3">
+          <BarChart3 className="h-6 w-6 text-muted-foreground opacity-50" />
+        </div>
+        <p className="text-sm font-medium text-muted-foreground">
           All categories have zero spending.
         </p>
       </div>
@@ -128,47 +117,47 @@ export function CategoryDonutChart({ data }: Props) {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-4 h-[260px]">
       {/* Donut chart */}
-      <ResponsiveContainer width="50%" height={220}>
+      <ResponsiveContainer width="50%" height="100%">
         <PieChart>
           <Pie
             data={chartData}
             cx="50%"
             cy="50%"
-            innerRadius={52}
-            outerRadius={88}
+            innerRadius={60}
+            outerRadius={95}
             dataKey="value"
-            paddingAngle={2}
+            paddingAngle={3}
             strokeWidth={0}
           >
             {chartData.map((entry, i) => (
               <Cell key={`cell-${i}`} fill={entry.color} />
             ))}
           </Pie>
-          <Tooltip content={<CustomTooltip />} />
+          <RechartsTooltip content={<CustomTooltip />} />
         </PieChart>
       </ResponsiveContainer>
 
       {/* Legend */}
-      <div className="flex-1 space-y-2 min-w-0">
-        {chartData.slice(0, 7).map((d) => (
+      <div className="flex-1 space-y-3 min-w-0 py-2">
+        {chartData.slice(0, 6).map((d) => (
           <div
             key={d.name}
-            className="flex items-center justify-between text-sm gap-2"
+            className="flex items-center justify-between text-sm gap-2 w-full group"
           >
             {/* Colour dot + name */}
-            <div className="flex items-center gap-2 min-w-0">
+            <div className="flex items-center gap-2.5 min-w-0">
               <span
-                className="h-2.5 w-2.5 rounded-full flex-shrink-0"
+                className="h-3 w-3 rounded-full flex-shrink-0 shadow-sm"
                 style={{ backgroundColor: d.color }}
               />
-              <span className="text-muted-foreground truncate" title={d.name}>
+              <span className="text-muted-foreground font-medium group-hover:text-foreground transition-colors truncate" title={d.name}>
                 {d.name}
               </span>
               {d.trend && (
                 <span
-                  className={`text-xs flex-shrink-0 ${
+                  className={`text-[10px] flex-shrink-0 px-1 py-0.5 rounded bg-muted/50 ${
                     d.trend === "up"
                       ? "text-destructive"
                       : d.trend === "down"
@@ -182,17 +171,17 @@ export function CategoryDonutChart({ data }: Props) {
             </div>
 
             {/* Percentage */}
-            <span className="font-medium tabular-nums flex-shrink-0">
+            <span className="font-bold tabular-nums flex-shrink-0 text-right w-10">
               {d.percentage}%
             </span>
           </div>
         ))}
 
-        {/* "and N more" if > 7 categories */}
-        {chartData.length > 7 && (
-          <p className="text-xs text-muted-foreground pt-1">
-            + {chartData.length - 7} more categories
-          </p>
+        {/* "and N more" if > 6 categories */}
+        {chartData.length > 6 && (
+          <div className="pt-2 mt-2 border-t border-border/40 text-xs font-semibold text-muted-foreground uppercase tracking-wider text-center">
+            + {chartData.length - 6} more
+          </div>
         )}
       </div>
     </div>

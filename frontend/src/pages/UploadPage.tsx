@@ -17,6 +17,7 @@ import {
   FileImage,
   FileCode,
   FilePlus,
+  Sparkles,
 } from "lucide-react";
 import { apiClient } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
@@ -41,8 +42,8 @@ const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
 const FORMAT_GROUPS = [
   {
     group: "Spreadsheets",
-    color: "bg-green-50 border-green-200",
-    iconColor: "text-green-600",
+    color: "bg-success/10 border-success/20",
+    iconColor: "text-success",
     Icon: FileSpreadsheet,
     formats: [
       { ext: "XLSX", desc: "Excel workbook" },
@@ -53,8 +54,8 @@ const FORMAT_GROUPS = [
   },
   {
     group: "Documents",
-    color: "bg-blue-50 border-blue-200",
-    iconColor: "text-blue-600",
+    color: "bg-blue-500/10 border-blue-500/20",
+    iconColor: "text-blue-500",
     Icon: FileText,
     formats: [
       { ext: "PDF", desc: "Bank statements" },
@@ -65,8 +66,8 @@ const FORMAT_GROUPS = [
   },
   {
     group: "Data",
-    color: "bg-purple-50 border-purple-200",
-    iconColor: "text-purple-600",
+    color: "bg-purple-500/10 border-purple-500/20",
+    iconColor: "text-purple-500",
     Icon: FileCode,
     formats: [
       { ext: "JSON", desc: "JSON data" },
@@ -77,8 +78,8 @@ const FORMAT_GROUPS = [
   },
   {
     group: "Images",
-    color: "bg-orange-50 border-orange-200",
-    iconColor: "text-orange-600",
+    color: "bg-orange-500/10 border-orange-500/20",
+    iconColor: "text-orange-500",
     Icon: FileImage,
     formats: [
       { ext: "PNG", desc: "Screenshot" },
@@ -89,8 +90,8 @@ const FORMAT_GROUPS = [
   },
   {
     group: "Other",
-    color: "bg-slate-50 border-slate-200",
-    iconColor: "text-slate-600",
+    color: "bg-muted border-border/50",
+    iconColor: "text-muted-foreground",
     Icon: FilePlus,
     formats: [
       { ext: "ZIP", desc: "Archive bundle" },
@@ -263,21 +264,21 @@ function InsightCard({
 }) {
   const styles = {
     success: {
-      card: "bg-green-50 border-green-200",
+      card: "bg-success/10 border-success/20",
       icon: (
-        <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+        <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0" />
       ),
     },
     warning: {
-      card: "bg-yellow-50 border-yellow-200",
+      card: "bg-warning/10 border-warning/20",
       icon: (
-        <AlertTriangle className="h-4 w-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+        <AlertTriangle className="h-5 w-5 text-warning flex-shrink-0" />
       ),
     },
     info: {
-      card: "bg-blue-50 border-blue-200",
+      card: "bg-primary/10 border-primary/20",
       icon: (
-        <Lightbulb className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+        <Lightbulb className="h-5 w-5 text-primary flex-shrink-0" />
       ),
     },
   } as const;
@@ -286,13 +287,15 @@ function InsightCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: -8 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: index * 0.05 }}
-      className={`flex items-start gap-3 p-3 rounded-lg border ${card}`}
+      initial={{ opacity: 0, x: -10, y: 5 }}
+      animate={{ opacity: 1, x: 0, y: 0 }}
+      transition={{ delay: index * 0.1, type: "spring", bounce: 0.3 }}
+      className={`flex items-start gap-3 p-4 rounded-xl border ${card} shadow-sm group hover:shadow-md transition-shadow`}
     >
-      {icon}
-      <div className="text-sm leading-relaxed whitespace-pre-wrap mt-[-2px]">
+      <div className="mt-0.5 group-hover:scale-110 transition-transform">
+        {icon}
+      </div>
+      <div className="text-sm font-medium leading-relaxed whitespace-pre-wrap text-foreground opacity-90">
         {insight.text.replace(/\*\*/g, '')}
       </div>
     </motion.div>
@@ -417,331 +420,337 @@ export default function UploadPage() {
   // ── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-5xl mx-auto pb-8">
       {/* ── Page header ─────────────────────────────────────────────────── */}
-      <div>
-        <h1 className="text-2xl font-display font-bold flex items-center gap-2">
-          <Upload className="h-6 w-6 text-primary" />
-          Upload Financial Documents
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Upload <strong>any file type</strong> — Excel, PDF, CSV, Word, images,
-          JSON, and more. Our AI will extract financial insights automatically.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card border border-border/50 rounded-2xl p-6 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/20 shrink-0">
+            <TrendingUp className="h-7 w-7 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-display font-bold tracking-tight">
+              AI Document Analysis
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1.5 font-medium">
+              <Sparkles className="h-4 w-4 text-primary" /> Extract intelligent insights from any financial document
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* ── Drop zone ───────────────────────────────────────────────────── */}
-      <Card className="glass-card overflow-hidden">
-        <div
-          onDrop={onDrop}
-          onDragOver={onDragOver}
-          onDragLeave={onDragLeave}
-          onClick={() => !file && inputRef.current?.click()}
-          className={[
-            "relative flex flex-col items-center justify-center gap-4 p-12 border-2 border-dashed rounded-xl transition-all select-none",
-            file
-              ? "cursor-default"
-              : "cursor-pointer hover:border-primary/60 hover:bg-muted/20",
-            isDragging
-              ? "border-blue-500 bg-blue-50 scale-[1.01]"
-              : "border-border",
-          ].join(" ")}
-        >
-          {/* Hidden native file input — no accept filter = all types */}
-          <input
-            ref={inputRef}
-            type="file"
-            accept="*/*"
-            onChange={onInputChange}
-            className="hidden"
-          />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        
+        {/* ── Left Column: Upload Zone ────────────────────────────────────── */}
+        <div className="lg:col-span-2 space-y-6">
+          <Card className="glass-card shadow-lg border-border/50 overflow-hidden relative">
+            <div className={`absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none transition-opacity duration-300 ${isDragging ? 'opacity-100' : 'opacity-0'}`} />
+            <div
+              onDrop={onDrop}
+              onDragOver={onDragOver}
+              onDragLeave={onDragLeave}
+              onClick={() => !file && inputRef.current?.click()}
+              className={[
+                "relative flex flex-col items-center justify-center gap-4 p-12 lg:p-16 border-2 border-dashed rounded-xl transition-all select-none m-6 bg-card/50 backdrop-blur-sm z-10",
+                file
+                  ? "cursor-default border-border"
+                  : "cursor-pointer hover:border-primary/50 hover:bg-primary/5",
+                isDragging
+                  ? "border-primary bg-primary/10 scale-[1.02]"
+                  : "border-border",
+              ].join(" ")}
+            >
+              {/* Hidden native file input */}
+              <input
+                ref={inputRef}
+                type="file"
+                accept="*/*"
+                onChange={onInputChange}
+                className="hidden"
+              />
 
-          <AnimatePresence mode="wait">
-            {file ? (
-              /* ── File selected ───────────────────────────────────────── */
-              <motion.div
-                key="selected"
-                initial={{ opacity: 0, scale: 0.93 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.93 }}
-                className="flex flex-col items-center gap-3 w-full max-w-sm"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <span className="text-6xl leading-none">
-                  {getFileEmoji(file.name)}
-                </span>
-
-                <div className="text-center">
-                  <p className="font-semibold text-sm break-all leading-snug">
-                    {file.name}
-                  </p>
-                  <div className="flex items-center justify-center gap-2 mt-1">
-                    <span className="text-xs text-muted-foreground">
-                      {formatBytes(file.size)}
-                    </span>
-                    <span className="text-muted-foreground">·</span>
-                    <span className="text-xs text-primary font-medium">
-                      {getFileCategoryLabel(file.name)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Progress bar — shown while uploading */}
-                {status === "uploading" && (
-                  <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-                    <motion.div
-                      className="h-full bg-blue-600 rounded-full"
-                      initial={{ width: "0%" }}
-                      animate={{ width: `${progress}%` }}
-                      transition={{ ease: "easeOut", duration: 0.3 }}
-                    />
-                  </div>
-                )}
-
-                {/* Change file button */}
-                {status !== "uploading" && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      inputRef.current?.click();
-                    }}
-                    className="text-xs text-primary underline underline-offset-2 hover:text-primary/80 transition-colors"
+              <AnimatePresence mode="wait">
+                {file ? (
+                  /* ── File selected ───────────────────────────────────────── */
+                  <motion.div
+                    key="selected"
+                    initial={{ opacity: 0, scale: 0.93 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.93 }}
+                    className="flex flex-col items-center gap-4 w-full max-w-md relative z-20"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    Choose a different file
-                  </button>
-                )}
+                     <div className="relative">
+                       <span className="text-7xl leading-none drop-shadow-md relative z-10 block hover:scale-105 transition-transform duration-300">
+                         {getFileEmoji(file.name)}
+                       </span>
+                     </div>
+                    
+                    <div className="text-center w-full">
+                      <p className="font-bold text-base truncate px-4 leading-snug">
+                        {file.name}
+                      </p>
+                      <div className="flex items-center justify-center gap-2 mt-1.5">
+                        <span className="text-xs font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                          {formatBytes(file.size)}
+                        </span>
+                        <span className="text-xs text-primary font-bold tracking-wide uppercase">
+                          {getFileCategoryLabel(file.name)}
+                        </span>
+                      </div>
+                    </div>
 
-                {/* Remove button */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    reset();
-                  }}
-                  className="absolute top-3 right-3 p-1.5 rounded-full bg-muted/60 hover:bg-muted transition-colors"
-                  aria-label="Remove file"
-                >
-                  <X className="h-3.5 w-3.5 text-muted-foreground" />
-                </button>
-              </motion.div>
-            ) : (
-              /* ── Empty drop zone ─────────────────────────────────────── */
-              <motion.div
-                key="empty"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex flex-col items-center gap-4 pointer-events-none"
-              >
-                <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-                  <Upload className="h-8 w-8 text-primary" />
-                </div>
+                    {/* Progress bar — shown while uploading */}
+                    {status === "uploading" && (
+                      <div className="w-full h-2 bg-muted/60 rounded-full overflow-hidden mt-4">
+                        <motion.div
+                          className="h-full bg-gradient-to-r from-primary to-purple-500 rounded-full relative"
+                          initial={{ width: "0%" }}
+                          animate={{ width: `${progress}%` }}
+                          transition={{ ease: "easeOut", duration: 0.3 }}
+                        >
+                          <div className="absolute inset-0 bg-white/20 w-full h-full animate-[shimmer_1s_infinite_linear]" style={{ backgroundImage: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)' }} />
+                        </motion.div>
+                      </div>
+                    )}
 
-                <div className="text-center">
-                  <p className="font-semibold text-base">
-                    Drag &amp; drop your file here
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    or click to browse your device
-                  </p>
-                </div>
+                    {/* Change file button */}
+                    {status !== "uploading" && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          inputRef.current?.click();
+                        }}
+                        className="text-xs font-semibold text-primary/80 hover:text-primary transition-colors mt-2"
+                      >
+                        Choose a different file
+                      </button>
+                    )}
 
-                {/* Supported type pills */}
-                <div className="flex flex-wrap justify-center gap-1.5 max-w-md">
-                  {[
-                    "XLSX",
-                    "XLS",
-                    "PDF",
-                    "CSV",
-                    "DOCX",
-                    "TXT",
-                    "JSON",
-                    "XML",
-                    "PNG",
-                    "JPG",
-                    "ZIP",
-                    "PPT",
-                  ].map((f) => (
-                    <span
-                      key={f}
-                      className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/60"
+                    {/* Remove button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        reset();
+                      }}
+                      className="absolute top-0 right-[-1rem] md:right-0 p-2 rounded-full bg-muted hover:bg-destructive hover:text-destructive-foreground transition-colors group shadow-sm"
+                      aria-label="Remove file"
                     >
-                      {f}
-                    </span>
-                  ))}
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/60">
-                    + more
-                  </span>
-                </div>
+                      <X className="h-4 w-4 text-muted-foreground group-hover:text-current" />
+                    </button>
+                  </motion.div>
+                ) : (
+                  /* ── Empty drop zone ─────────────────────────────────────── */
+                  <motion.div
+                    key="empty"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="flex flex-col items-center gap-5 pointer-events-none z-20"
+                  >
+                    <div className="h-20 w-20 rounded-3xl bg-primary/10 flex items-center justify-center relative group">
+                      <div className="absolute inset-0 bg-primary opacity-20 blur-xl rounded-full group-hover:opacity-30 transition-opacity" />
+                      <Upload className="h-10 w-10 text-primary relative z-10 group-hover:-translate-y-1 transition-transform" />
+                    </div>
 
-                <p className="text-xs text-muted-foreground">
-                  All file types accepted · Max {MAX_SIZE_MB} MB
-                </p>
-              </motion.div>
-            )}
+                    <div className="text-center">
+                      <p className="font-bold text-lg text-foreground">
+                        Drag & drop a document here
+                      </p>
+                      <p className="text-sm font-medium text-muted-foreground mt-1">
+                        or click to browse your device
+                      </p>
+                    </div>
+
+                    {/* Supported type pills */}
+                    <div className="flex flex-wrap justify-center gap-2 max-w-sm mt-2">
+                      {[
+                        "CSV",
+                        "PDF",
+                        "XLSX",
+                        "JSON",
+                        "PNG",
+                      ].map((f) => (
+                        <span
+                          key={f}
+                          className="text-[11px] font-bold px-3 py-1 rounded-full bg-card shadow-sm text-muted-foreground border border-border/50"
+                        >
+                          {f}
+                        </span>
+                      ))}
+                      <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-primary/5 text-primary border border-primary/20">
+                        + more
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground/80 mt-2 bg-muted/40 px-3 py-1.5 rounded-full">
+                      <File className="h-3.5 w-3.5" /> Max size {MAX_SIZE_MB} MB
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* ── Action bar ──────────────────────────────────────────────── */}
+            <div className="px-6 py-5 bg-muted/20 border-t border-border/50 flex flex-col sm:flex-row gap-4 items-center justify-between z-20 relative">
+              <div className="w-full sm:w-auto flex-1">
+                {status === "uploading" && (
+                  <div className="flex items-center gap-3 bg-primary/10 px-4 py-2 rounded-lg border border-primary/20">
+                    <Loader2 className="h-5 w-5 text-primary animate-spin" />
+                    <div>
+                       <p className="text-sm font-bold text-primary">Cognifin is Analysing...</p>
+                       <p className="text-[10px] uppercase font-bold tracking-wider text-primary/70">{Math.round(progress)}% Complete</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex gap-3 w-full sm:w-auto">
+                {file && status !== "uploading" && (
+                  <>
+                    <Button variant="outline" onClick={reset} type="button" className="flex-1 sm:flex-none">
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleUpload();
+                      }}
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md flex-1 sm:flex-none px-6"
+                    >
+                      <Brain className="h-4 w-4 mr-2" />
+                      Analyse Document
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          </Card>
+
+          {/* ── Results ─────────────────────────────────────────────────────── */}
+          <AnimatePresence>
+            {(status === "success" && insights.length > 0) || status === "error" ?  (
+               <motion.div
+                 key="status-area"
+                 initial={{ opacity: 0, y: 20 }}
+                 animate={{ opacity: 1, y: 0 }}
+                 exit={{ opacity: 0, scale: 0.95 }}
+                 className="pt-2"
+               >
+                 {status === "success" && insights.length > 0 && (
+                   <Card className="glass-card shadow-lg border-primary/20 overflow-hidden">
+                     <div className="bg-primary/5 px-6 py-4 border-b border-border/50 flex items-center justify-between">
+                       <h3 className="font-bold flex items-center gap-2 text-foreground">
+                         <TrendingUp className="h-5 w-5 text-primary" />
+                         Intelligence Report
+                       </h3>
+                       <span className="text-xs font-bold uppercase tracking-wider bg-primary/10 text-primary px-3 py-1 rounded-full border border-primary/20 shadow-sm">
+                         {insights.length} {insights.length === 1 ? "Insight" : "Insights"} Found
+                       </span>
+                     </div>
+     
+                     <div className="p-6 space-y-4">
+                       {insights.map((ins, i) => (
+                         <InsightCard key={i} insight={ins} index={i} />
+                       ))}
+                     </div>
+                   </Card>
+                 )}
+     
+                 {status === "error" && (
+                   <Card className="glass-card p-6 border-destructive/30 bg-destructive/5 shadow-sm">
+                     <div className="flex items-start gap-4">
+                       <div className="p-2 bg-destructive/10 rounded-xl">
+                         <AlertTriangle className="h-6 w-6 text-destructive" />
+                       </div>
+                       <div className="flex-1">
+                         <p className="text-base font-bold text-destructive">Analysis Failed</p>
+                         <p className="text-sm font-medium text-destructive/80 mt-1 leading-relaxed">
+                           {errorMsg}
+                         </p>
+                         <div className="flex gap-3 mt-4">
+                           <Button
+                             size="sm"
+                             variant="outline"
+                             className="border-destructive/30 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                             onClick={() => {
+                               setStatus("idle");
+                               setErrorMsg("");
+                             }}
+                           >
+                             Retry Upload
+                           </Button>
+                           <Button size="sm" variant="ghost" onClick={reset} className="text-muted-foreground hover:text-foreground">
+                             Clear Session
+                           </Button>
+                         </div>
+                       </div>
+                     </div>
+                   </Card>
+                 )}
+               </motion.div>
+            ) : null}
           </AnimatePresence>
         </div>
 
-        {/* ── Action bar ──────────────────────────────────────────────── */}
-        {file && status !== "uploading" && (
-          <div className="px-6 pb-5 pt-3 flex gap-3">
-            <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleUpload();
-              }}
-              className="bg-blue-600 hover:bg-blue-700 text-white flex-1 shadow-sm"
-            >
-              <Brain className="h-4 w-4 mr-2" />
-              Analyse with AI
-            </Button>
-            <Button variant="outline" onClick={reset} type="button">
-              <X className="h-4 w-4 mr-1.5" />
-              Clear
-            </Button>
-          </div>
-        )}
+        {/* ── Right Column: Info ────────────────────────────────────────── */}
+        <div className="space-y-6">
+           {/* Privacy Info */}
+          <Card className="glass-card p-5 border-success/20 bg-success/5 shadow-sm">
+             <div className="flex items-center gap-3 mb-3">
+               <div className="p-1.5 rounded-lg bg-success/20 text-success">
+                 <CheckCircle2 className="h-5 w-5" />
+               </div>
+               <h3 className="text-sm font-bold text-success-foreground">Secure & Private</h3>
+             </div>
+             <p className="text-xs font-medium text-muted-foreground leading-relaxed">
+               All processed documents are <strong>transiently held in memory</strong>. Cognifin does not permanently store your uploads, ensuring bank-grade privacy.
+             </p>
+          </Card>
 
-        {status === "uploading" && (
-          <div className="px-6 pb-5 pt-2 flex items-center gap-3">
-            <Loader2 className="h-4 w-4 text-blue-600 animate-spin flex-shrink-0" />
-            <div className="flex-1">
-              <p className="text-sm font-medium text-blue-700">
-                Analysing your document…
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                This may take a moment depending on file size
-              </p>
-            </div>
-            <span className="text-sm font-semibold text-blue-600 tabular-nums">
-              {Math.round(progress)}%
-            </span>
-          </div>
-        )}
-      </Card>
+          {/* Format Catalogue */}
+          <Card className="glass-card p-5 border-border/50 shadow-sm">
+            <h3 className="text-sm font-bold mb-4 flex items-center gap-2">
+              <FilePlus className="h-4 w-4 text-primary" />
+              Supported Formats
+            </h3>
 
-      {/* ── Results ─────────────────────────────────────────────────────── */}
-      <AnimatePresence>
-        {status === "success" && insights.length > 0 && (
-          <motion.div
-            key="results"
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-          >
-            <Card className="glass-card p-6">
-              <h3 className="font-semibold mb-4 flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                AI Extracted Insights
-                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full ml-1 font-medium">
-                  {insights.length}{" "}
-                  {insights.length === 1 ? "insight" : "insights"}
-                </span>
-              </h3>
-
-              <div className="space-y-2.5">
-                {insights.map((ins, i) => (
-                  <InsightCard key={i} insight={ins} index={i} />
-                ))}
-              </div>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={reset}
-                className="mt-5"
-              >
-                <Upload className="h-3.5 w-3.5 mr-1.5" />
-                Upload Another File
-              </Button>
-            </Card>
-          </motion.div>
-        )}
-
-        {status === "error" && (
-          <motion.div
-            key="error"
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-          >
-            <Card className="glass-card p-6 border-red-200 bg-red-50">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="font-semibold text-red-700">Upload Failed</p>
-                  <p className="text-sm text-red-600 mt-1 leading-relaxed">
-                    {errorMsg}
-                  </p>
-                  <div className="flex gap-2 mt-3">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setStatus("idle");
-                        setErrorMsg("");
-                      }}
-                    >
-                      Try Again
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={reset}>
-                      Clear
-                    </Button>
+            <div className="space-y-3">
+              {FORMAT_GROUPS.map(({ group, color, iconColor, Icon, formats }) => (
+                <div key={group} className={`rounded-xl border p-3 ${color} bg-card/50`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Icon className={`h-4 w-4 ${iconColor}`} />
+                    <span className={`text-xs font-bold uppercase tracking-wider ${iconColor}`}>
+                      {group}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {formats.map(({ ext, desc }) => (
+                      <div key={ext} className="flex items-center px-1.5 py-0.5 rounded shadow-sm bg-background border border-border/50 group relative cursor-help">
+                        <span className="text-[10px] font-bold text-foreground">
+                          {ext}
+                        </span>
+                        {/* Tooltip */}
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-popover text-popover-foreground text-[10px] font-medium rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-md z-30">
+                          {desc}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </div>
-            </Card>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── Format catalogue ────────────────────────────────────────────── */}
-      <Card className="glass-card p-6">
-        <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-          <FileText className="h-4 w-4 text-muted-foreground" />
-          All Supported File Types
-        </h3>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-          {FORMAT_GROUPS.map(({ group, color, iconColor, Icon, formats }) => (
-            <div key={group} className={`rounded-xl border p-3 ${color}`}>
-              <div className="flex items-center gap-2 mb-2.5">
-                <Icon className={`h-4 w-4 ${iconColor}`} />
-                <span className={`text-xs font-semibold ${iconColor}`}>
-                  {group}
-                </span>
-              </div>
-              <div className="space-y-1">
-                {formats.map(({ ext, desc }) => (
-                  <div key={ext} className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-foreground">
-                      .{ext.toLowerCase()}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground leading-tight text-right max-w-[110px]">
-                      {desc}
-                    </span>
-                  </div>
-                ))}
+              ))}
+            </div>
+            
+            <div className="mt-5 text-center">
+              <div className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-bold text-muted-foreground/60 border-t border-border/50 pt-4 px-8 w-full justify-center">
+                <Brain className="h-3 w-3" /> Cognifin ML Engine
               </div>
             </div>
-          ))}
+          </Card>
         </div>
 
-        <div className="mt-4 flex items-start gap-2.5 p-3 rounded-lg bg-muted/40 border border-border/40">
-          <File className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            <strong className="text-foreground">
-              All file types are accepted.
-            </strong>{" "}
-            Files are sent securely to the backend AI service for processing and
-            are not stored permanently on the server. Maximum upload size is{" "}
-            <strong className="text-foreground">{MAX_SIZE_MB} MB</strong> per
-            file. For best results with financial data, use Excel (.xlsx), CSV,
-            or PDF formats.
-          </p>
-        </div>
-      </Card>
+      </div>
     </div>
   );
 }
