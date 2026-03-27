@@ -1,6 +1,6 @@
-# Smart Finance Manager (AI-SecureFinance)
+## CoGNIFIN-AI (AI-SecureFinance)
 
-Smart Finance Manager is a comprehensive, production-ready financial tracking and analytics platform. Engineered with a scalable microservices-inspired architecture, this platform empowers users to effortlessly monitor their spending habits, enforce proactive budgeting, track long-term financial goals, and glean intelligent insights through natively integrated Machine Learning operations.
+## CoGNIFIN-AI is a comprehensive, production-ready financial tracking and analytics platform. Engineered with a scalable microservices-inspired architecture, this platform empowers users to effortlessly monitor their spending habits, enforce proactive budgeting, track long-term financial goals, and glean intelligent insights through natively integrated Machine Learning operations.
 
 ## Features & Capabilities
 
