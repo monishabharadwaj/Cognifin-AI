@@ -12,7 +12,7 @@ Cost is about **$20/month** for Lightsail 4 GB (or an EC2 `t3.small`). Stop or d
 2. OS: **Ubuntu 24.04**
 3. Plan: **$20 / 4 GB RAM / 2 vCPU**
 4. Region: closest to you (Mumbai `ap-south-1` if you are in India)
-5. Networking → IPv4 firewall: allow **SSH (22)** and **HTTP (80)**
+5. Networking → IPv4 firewall: allow **SSH (22)** and **HTTP (80)**. If something else already uses port 80 on the instance, also allow **TCP 8080** and map the `web` service to `"8080:80"` in `docker-compose.yml`.
 6. Copy the public IP
 
 Optional: Elastic IP / static IP in Lightsail so the address does not change on reboot.
@@ -70,8 +70,8 @@ docker compose logs -f
 
 When it is healthy:
 
-- App: `http://YOUR_IP`
-- API health: `http://YOUR_IP/health`
+- App: `http://YOUR_IP` (or `http://YOUR_IP:8080` if you published web on 8080)
+- API health: `http://YOUR_IP/health` (same host/port as the app)
 
 Demo login from `database/init.sql`:
 
