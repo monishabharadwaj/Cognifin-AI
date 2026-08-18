@@ -9,7 +9,8 @@ const financialGoalsModel = require("../models/financialGoals");
 const tripPlanningModel = require("../models/tripPlanning");
 const transactionModel = require("../models/transactionModel");
 
-const ML_SERVICE_URL = "http://127.0.0.1:8000";
+const env = require("../config/env");
+const ML_SERVICE_URL = env.ML_SERVICE_URL;
 
 // Multer: store uploads in memory (no disk required)
 const upload = multer({

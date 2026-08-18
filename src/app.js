@@ -13,6 +13,8 @@ const budgetRoutes = require("./finance/budgets/budgetRoutes");
 const app = express();
 
 // ─── Allowed Origins ──────────────────────────────────────────────────────────
+const env = require("./config/env");
+
 const ALLOWED_ORIGINS = [
   "http://localhost:8080",
   "http://localhost:8081",
@@ -20,6 +22,10 @@ const ALLOWED_ORIGINS = [
   "http://127.0.0.1:8081",
   "http://localhost:3000",
   "http://127.0.0.1:3000",
+  ...String(env.FRONTEND_ORIGIN)
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
 ];
 
 // ─── CORS Configuration ───────────────────────────────────────────────────────
@@ -28,7 +34,7 @@ const corsOptions = {
     // Allow requests with no origin (Postman, curl, server-to-server)
     if (!origin) return callback(null, true);
 
-    if (ALLOWED_ORIGINS.includes(origin)) {
+    if (env.CORS_ALLOW_ALL || ALLOWED_ORIGINS.includes(origin)) {
       callback(null, true);
     } else {
       console.warn(`CORS blocked request from origin: ${origin}`);

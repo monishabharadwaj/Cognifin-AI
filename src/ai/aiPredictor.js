@@ -1,6 +1,7 @@
 const axios = require('axios');
+const env = require('../config/env');
 
-const ML_SERVICE_URL = "http://127.0.0.1:8000";
+const ML_SERVICE_URL = env.ML_SERVICE_URL;
 
 async function analyzeTransaction(transactionAmount, sequence) {
     try {

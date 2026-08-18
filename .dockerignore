@@ -1,0 +1,11 @@
+node_modules
+frontend/node_modules
+frontend/dist
+.git
+.gitignore
+**/.env
+**/__pycache__
+**/*.pyc
+ml-service/creditcard.csv
+tests
+*.md

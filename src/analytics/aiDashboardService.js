@@ -71,7 +71,7 @@ const getAIDashboard = async (userId) => {
   } catch (err) {
     console.error("Prediction failed:", {
       message: err.message,
-      endpoint: "http://127.0.0.1:8000/predict_spending",
+      endpoint: `${require("../config/env").ML_SERVICE_URL}/predict_spending`,
       statusCode: err.response?.status,
       details: err.response?.data
     });
